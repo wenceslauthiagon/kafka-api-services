@@ -1,0 +1,26 @@
+{
+  "name": "picpay",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "latest",
+    "@nuxtjs/eslint-config-typescript": "^12.1.0",
+    "@nuxtjs/eslint-module": "^4.1.0",
+    "eslint": "^8.49.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "nuxt": "^3.7.3"
+  },
+  "dependencies": {
+    "@nuxt/ui": "^2.8.1",
+    "@pinia/nuxt": "^0.4.11",
+    "pinia": "^2.1.6",
+    "zod": "^3.22.2"
+  }
+}

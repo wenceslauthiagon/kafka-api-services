@@ -1,0 +1,89 @@
+{
+  "number": 1,
+  "size": 8,
+  "totalPages": 1,
+  "numberOfElements": 8,
+  "totalElements": 8,
+  "firstPage": true,
+  "hasPreviousPage": false,
+  "hasNextPage": false,
+  "hasContent": true,
+  "first": true,
+  "last": true,
+  "nextPage": 2,
+  "previousPage": 0,
+  "content": [
+    {
+      "id": 262,
+      "nome": "BOREAL",
+      "descricao": "BOREAL S/A BANCO COM. CR.",
+      "digitoBanco": "",
+      "ispb": null,
+      "cnpj": "30280184000151",
+      "flagAtivoBacen": true
+    },
+    {
+      "id": 263,
+      "nome": "BANCO CACIQUE",
+      "descricao": "BANCO CACIQUE S.A.",
+      "digitoBanco": "",
+      "ispb": null,
+      "cnpj": "33349358000183",
+      "flagAtivoBacen": true
+    },
+    {
+      "id": 264,
+      "nome": "BANCO PERFORMANCE",
+      "descricao": "BANCO PERFORMANCE S.A.",
+      "digitoBanco": "",
+      "ispb": null,
+      "cnpj": null,
+      "flagAtivoBacen": false
+    },
+    {
+      "id": 266,
+      "nome": "BCO CEDULA S.A.",
+      "descricao": "Banco Cédula S.A.",
+      "digitoBanco": "",
+      "ispb": "33132044",
+      "cnpj": "33132044000124",
+      "flagAtivoBacen": true
+    },
+    {
+      "id": 277,
+      "nome": "BANCO PLANIBANC",
+      "descricao": "BANCO PLANIBANC S.A.",
+      "digitoBanco": "",
+      "ispb": null,
+      "cnpj": null,
+      "flagAtivoBacen": false
+    },
+    {
+      "id": 291,
+      "nome": "BCN",
+      "descricao": "BANCO DE CREDITO NACIONAL S.A.",
+      "digitoBanco": "",
+      "ispb": null,
+      "cnpj": "60898723000181",
+      "flagAtivoBacen": true
+    },
+    {
+      "id": 496,
+      "nome": "BANCO DE ESPANA",
+      "descricao": "BANCO EXTERIOR DE ESPANA S.A.",
+      "digitoBanco": "",
+      "ispb": null,
+      "cnpj": "45283173000100",
+      "flagAtivoBacen": true
+    },
+    {
+      "id": 498,
+      "nome": "HISPANO BANCO",
+      "descricao": "CENTRO HISPANO BANCO",
+      "digitoBanco": "",
+      "ispb": null,
+      "cnpj": null,
+      "flagAtivoBacen": false
+    }
+  ]
+}

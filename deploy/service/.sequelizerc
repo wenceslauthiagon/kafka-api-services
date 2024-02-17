@@ -1,0 +1,10 @@
+const path = require('path')
+
+const PATH_RELATIVE = process.env.GITHUB_ACTIONS ? '' : '.'
+
+module.exports = {
+  config: path.resolve('./config/database.js'),
+  "models-path": path.resolve(PATH_RELATIVE + '/sequelize/models'),
+  "seeders-path": path.resolve(PATH_RELATIVE + '/sequelize/seeders'),
+  "migrations-path": path.resolve(PATH_RELATIVE + '/sequelize/migrations')
+}

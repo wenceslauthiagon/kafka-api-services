@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "outDir": "../../dist/apps/api-users"
+  },
+  "include": ["src/**/*", "src/assets/i18n/**/*"],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"],
+  "assets": ["src/assets/i18n/**/*"]
+}

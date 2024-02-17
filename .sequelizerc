@@ -1,0 +1,42 @@
+const path = require('path');
+const dotenv = require('dotenv');
+const fs = require('fs');
+
+if (!process.env.APP_PATH) {
+  if (!process.env.ENV_FILE) {
+    console.log('Missing ENV_FILE enviroment variable.');
+    console.log('Usage: ENV_FILE=<.env file> npx sequelize');
+    process.exit(-1);
+  }
+
+  dotenv.config({ path: path.resolve(process.cwd(), process.env.ENV_FILE) });
+
+  if (!process.env.APP_PATH) {
+    console.log('Missing APP_PATH enviroment variable.');
+    process.exit(-1);
+  }
+}
+
+const configPath = path.resolve('./config/database.js');
+console.log(configPath);
+
+const modelsPath = path.resolve(
+  process.env.APP_PATH + '/src/infrastructure/sequelize/models',
+);
+const seedersPath = path.resolve(
+  process.env.APP_PATH + '/src/infrastructure/sequelize/seeders',
+);
+const migrationsPath = path.resolve(
+  process.env.APP_PATH + '/src/infrastructure/sequelize/migrations',
+);
+
+if (!fs.existsSync(migrationsPath)) {
+  process.exit(0);
+}
+
+module.exports = {
+  config: configPath,
+  'models-path': modelsPath,
+  'seeders-path': seedersPath,
+  'migrations-path': migrationsPath,
+};

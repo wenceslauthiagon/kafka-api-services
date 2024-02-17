@@ -1,0 +1,230 @@
+import { Controller, Logger, Body, Post } from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiProperty,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  ApiUnprocessableEntityResponse,
+} from '@nestjs/swagger';
+import { IsNumber, IsString, IsUUID } from 'class-validator';
+import { DefaultApiHeaders, KafkaServiceParam, LoggerParam } from '@zro/common';
+import { PaymentStatusEnum } from '@zro/nupay/domain';
+import { CreateRefundNuPayServiceKafka } from '@zro/nupay/infrastructure';
+import { CreateRefundRequest } from '@zro/nupay/interface';
+import { AuthUser } from '@zro/users/domain';
+import { AuthUserParam } from '@zro/users/infrastructure';
+
+export class NuPayCreateRefundBodyRequest {
+  @ApiProperty({
+    description: 'Payment nupay checkout Id.',
+    example: '475e942d-365e-4857-bc93-d3e76bded1c2',
+  })
+  @IsUUID(4)
+  checkout_id!: string;
+
+  @ApiProperty({
+    example: 100.5,
+    description: 'Amount to refund.',
+    required: true,
+  })
+  @IsNumber()
+  amount: number;
+
+  @ApiProperty({
+    example: 100.5,
+    description: 'Observation.',
+    required: true,
+  })
+  @IsString()
+  notes?: string;
+}
+
+export interface NuPayCreateRefundResponse {
+  id: string;
+  status: string;
+  referenceId?: string;
+  authorizationId?: string;
+  destination?: string;
+  requesterName: string;
+  requesterDocument: string;
+  requesterContact: string;
+  amount: number;
+  currency?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  expiresAt: Date;
+}
+
+class NuPayRefundRestResponse {
+  @ApiProperty({
+    description: 'ID checkout',
+    example: 'bea32ecc-0606-4f28-b54c-c69263c04c0d',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'Id checkout API externa',
+    example: 'e1fa2656-a6d8-4927-a222-1d84217ef14b',
+    required: false,
+  })
+  reference_id?: string;
+
+  @ApiProperty({
+    description: 'Id authorization checkout API externa',
+    example: 'e1fa2656-a6d8-4927-a222-1d84217ef14b',
+    required: false,
+  })
+  authorization_id?: string;
+
+  @ApiProperty({
+    description: 'Payment State',
+    example: PaymentStatusEnum.WAITING_PAYMENT_METHOD,
+    enum: PaymentStatusEnum,
+  })
+  status: string;
+
+  @ApiProperty({
+    description: 'Destination payment.',
+    example: 'afasfasf565asfsa2abc',
+  })
+  destination?: string;
+
+  @ApiProperty({
+    description: 'Buyer name.',
+    example: 'afasfasf565asfsa2abc',
+  })
+  requester_name: string;
+
+  @ApiProperty({
+    description: 'Document buyer.',
+    example: 'afasfasf565asfsa2abc',
+  })
+  requester_document: string;
+
+  @ApiProperty({
+    description: 'Contact buyer.',
+    example: 'afasfasf565asfsa2abc',
+  })
+  requester_contact: string;
+
+  @ApiProperty({
+    description: 'Checkout value.',
+    example: 10.01,
+  })
+  amount: number;
+
+  @ApiProperty({
+    description: 'Currency payment.',
+    example: 'BRL',
+  })
+  currency?: string;
+
+  @ApiProperty({
+    description: 'Date create payment',
+    example: '2023-09-24T05:38:01.133Z',
+  })
+  created_at: Date;
+
+  @ApiProperty({
+    description: 'Date update payment',
+    example: '2023-09-24T05:38:01.133Z',
+  })
+  updated_at: Date;
+
+  @ApiProperty({
+    description: 'Date expiration payment',
+    example: '2023-09-24T05:38:01.133Z',
+  })
+  expires_at: Date;
+
+  constructor(props: NuPayCreateRefundResponse) {
+    this.id = props.id;
+    this.status = props.status;
+    this.reference_id = props.referenceId;
+    this.authorization_id = props.authorizationId;
+    this.destination = props.destination;
+    this.requester_name = props.requesterName;
+    this.requester_document = props.requesterDocument;
+    this.requester_contact = props.requesterContact;
+    this.amount = props.amount;
+    this.currency = props.currency;
+    this.created_at = props.createdAt;
+    this.updated_at = props.updatedAt;
+    this.expires_at = props.expiresAt;
+  }
+}
+
+@ApiTags('NuPay | Checkout')
+@ApiBearerAuth()
+@DefaultApiHeaders()
+@Controller('nupay/payments/refund')
+export class NuPayCreateRefundController {
+  /**
+   * create Nupay refund endpoint.
+   */
+  @ApiOperation({
+    summary: 'Create refund.',
+    description: 'Create a new refund for a payment.',
+  })
+  @ApiCreatedResponse({
+    description: 'The NuPay refund returned successfully.',
+    type: NuPayRefundRestResponse,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'User authentication failed.',
+  })
+  @ApiBadRequestResponse({
+    description:
+      'If ate required params are missing or has invalid format or type.',
+  })
+  @ApiUnprocessableEntityResponse({
+    description:
+      'If any required params are missing or has invalid format or type.',
+  })
+  @Post()
+  async execute(
+    @AuthUserParam() user: AuthUser,
+    @KafkaServiceParam(CreateRefundNuPayServiceKafka)
+    service: CreateRefundNuPayServiceKafka,
+    @LoggerParam(NuPayCreateRefundController)
+    logger: Logger,
+    @Body() params: NuPayCreateRefundBodyRequest,
+  ): Promise<NuPayRefundRestResponse> {
+    // Create a payload.
+    const payload: CreateRefundRequest = {
+      checkoutId: params.checkout_id,
+      notes: params.notes,
+      amount: params.amount,
+    };
+
+    logger.debug('Create NuPay refund.', { user, payload });
+
+    // Call create pixKey service.
+    const result = await service.execute(payload);
+
+    logger.debug('NuPay refund created.', result);
+
+    const response =
+      result &&
+      new NuPayRefundRestResponse({
+        id: result.id,
+        status: result.status,
+        referenceId: result.referenceId,
+        authorizationId: result.authorizationId,
+        destination: result.destination,
+        requesterName: result.requesterName,
+        requesterDocument: result.requesterDocument,
+        requesterContact: result.requesterContact,
+        amount: result.amount,
+        currency: result.currency,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+        expiresAt: result.expiresAt,
+      });
+
+    return response;
+  }
+}

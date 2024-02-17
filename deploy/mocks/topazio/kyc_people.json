@@ -1,0 +1,33 @@
+{
+  "TaxIdNumber": "70042896053",
+  "TaxIdCountry": "BRAZIL",
+  "AlternativeIdNumbers": {
+    "SocialSecurityNumber": "70042896053"
+  },
+  "Name": "GATUHEL SILVA",
+  "Aliases": {
+    "CommonName": "GATUHEL SILVA",
+    "StandardizedName": "GATUHEL SILVA"
+  },
+  "Gender": "F",
+  "NameWordCount": 2,
+  "NumberOfFullNameNamesakes": 10,
+  "NameUniquenessScore": 0.982,
+  "FirstNameUniquenessScore": 0.001,
+  "FirstAndLastNameUniquenessScore": 0.00628930,
+  "BirthDate": "1987-06-05T00:00:00Z",
+  "Age": 40,
+  "ZodiacSign": "GEMEOS",
+  "ChineseSign": "Rooster",
+  "BirthCountry": "BRASILEIRA",
+  "MotherName": "UNGOH SILVA",
+  "FatherName": "",
+  "MaritalStatusData": {},
+  "TaxIdStatus": "REGULAR",
+  "TaxIdOrigin": "RECEITA FEDERAL",
+  "TaxIdFiscalRegion": "SE",
+  "HasObitIndication": false,
+  "TaxIdStatusDate": "2021-11-30T00:00:00",
+  "CreationDate": "2013-08-23T00:00:00Z",
+  "LastUpdateDate": "2022-01-16T00:00:00Z"
+}

@@ -1,0 +1,193 @@
+import { faker } from '@faker-js/faker/locale/pt_BR';
+import { createMock } from 'ts-auto-mock';
+import { method, On } from 'ts-auto-mock/extension';
+import { Test, TestingModule } from '@nestjs/testing';
+import {
+  InvalidDataFormatException,
+  defaultLogger as logger,
+} from '@zro/common';
+import {
+  AdminBankingTedRepository,
+  AdminBankingTedState,
+} from '@zro/banking/domain';
+import {
+  AdminBankingTedInvalidStateException,
+  AdminBankingTedNotFoundException,
+} from '@zro/banking/application';
+import {
+  ForwardAdminBankingTedMicroserviceController as Controller,
+  AdminBankingTedDatabaseRepository,
+  AdminBankingTedModel,
+} from '@zro/banking/infrastructure';
+import {
+  AdminBankingTedEventEmitterControllerInterface,
+  ForwardAdminBankingTedRequest,
+} from '@zro/banking/interface';
+import { AdminBankingTedFactory } from '@zro/test/banking/config';
+import { AppModule } from '@zro/banking/infrastructure/nest/modules/app.module';
+import { KafkaContext } from '@nestjs/microservices';
+
+describe('ForwardAdminBankingTedMicroserviceController', () => {
+  let module: TestingModule;
+  let controller: Controller;
+  let adminBankingTedRepository: AdminBankingTedRepository;
+
+  const adminBankingTedEmitter: AdminBankingTedEventEmitterControllerInterface =
+    createMock<AdminBankingTedEventEmitterControllerInterface>();
+  const mockEmitAdminBankingTedConfirmeEvent: jest.Mock = On(
+    adminBankingTedEmitter,
+  ).get(method((mock) => mock.emitAdminBankingTedEvent));
+
+  const ctx: KafkaContext = createMock<KafkaContext>();
+
+  beforeAll(async () => {
+    module = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+    controller = module.get<Controller>(Controller);
+    adminBankingTedRepository = new AdminBankingTedDatabaseRepository();
+  });
+
+  beforeEach(() => jest.resetAllMocks());
+
+  describe('ForwardAdminBankingTed', () => {
+    describe('With valid parameters', () => {
+      it('TC0001 - Should forward successfully', async () => {
+        const adminBankingTed =
+          await AdminBankingTedFactory.create<AdminBankingTedModel>(
+            AdminBankingTedModel.name,
+            {
+              state: AdminBankingTedState.CONFIRMED,
+            },
+          );
+
+        const message: ForwardAdminBankingTedRequest = {
+          id: adminBankingTed.id,
+        };
+
+        const result = await controller.execute(
+          adminBankingTedRepository,
+          adminBankingTedEmitter,
+          logger,
+          message,
+          ctx,
+        );
+
+        expect(result).toBeDefined();
+        expect(result.ctx).toBeDefined();
+        expect(result.value).toBeDefined();
+        expect(result.value.id).toBeDefined();
+        expect(result.value.state).toBe(AdminBankingTedState.FORWARDED);
+        expect(result.value.createdAt).toBeDefined();
+        expect(mockEmitAdminBankingTedConfirmeEvent).toHaveBeenCalledTimes(1);
+        expect(mockEmitAdminBankingTedConfirmeEvent.mock.calls[0][0]).toBe(
+          AdminBankingTedState.FORWARDED,
+        );
+      });
+
+      it('TC0002 - Should forward successfully when admin banking ted is already forward', async () => {
+        const adminBankingTed =
+          await AdminBankingTedFactory.create<AdminBankingTedModel>(
+            AdminBankingTedModel.name,
+            {
+              state: AdminBankingTedState.FORWARDED,
+            },
+          );
+
+        const message: ForwardAdminBankingTedRequest = {
+          id: adminBankingTed.id,
+        };
+
+        const result = await controller.execute(
+          adminBankingTedRepository,
+          adminBankingTedEmitter,
+          logger,
+          message,
+          ctx,
+        );
+
+        expect(result).toBeDefined();
+        expect(result.ctx).toBeDefined();
+        expect(result.value).toBeDefined();
+        expect(result.value.id).toBeDefined();
+        expect(result.value.state).toBe(AdminBankingTedState.FORWARDED);
+        expect(result.value.createdAt).toBeDefined();
+        expect(mockEmitAdminBankingTedConfirmeEvent).toHaveBeenCalledTimes(0);
+      });
+    });
+  });
+
+  describe('With invalid parameters', () => {
+    it('TC0003 - Should throw InvalidDataFormatException when invalid data format', async () => {
+      await AdminBankingTedFactory.create<AdminBankingTedModel>(
+        AdminBankingTedModel.name,
+      );
+
+      const message: ForwardAdminBankingTedRequest = {
+        id: null,
+      };
+
+      const result = controller.execute(
+        adminBankingTedRepository,
+        adminBankingTedEmitter,
+        logger,
+        message,
+        ctx,
+      );
+      await expect(result).rejects.toThrow(InvalidDataFormatException);
+      expect(mockEmitAdminBankingTedConfirmeEvent).toHaveBeenCalledTimes(0);
+    });
+
+    it('TC0004 - Should throw AdminBankingTedNotFoundException when admin banking ted do not found', async () => {
+      await AdminBankingTedFactory.create<AdminBankingTedModel>(
+        AdminBankingTedModel.name,
+        {
+          state: AdminBankingTedState.CONFIRMED,
+        },
+      );
+
+      const message: ForwardAdminBankingTedRequest = {
+        id: faker.datatype.uuid(),
+      };
+
+      const result = controller.execute(
+        adminBankingTedRepository,
+        adminBankingTedEmitter,
+        logger,
+        message,
+        ctx,
+      );
+
+      await expect(result).rejects.toThrow(AdminBankingTedNotFoundException);
+      expect(mockEmitAdminBankingTedConfirmeEvent).toHaveBeenCalledTimes(0);
+    });
+
+    it('TC0005 - Should throw AdminBankingTedInvalidStateException when state is invalid', async () => {
+      const adminBankingTed =
+        await AdminBankingTedFactory.create<AdminBankingTedModel>(
+          AdminBankingTedModel.name,
+        );
+
+      const message: ForwardAdminBankingTedRequest = {
+        id: adminBankingTed.id,
+      };
+
+      const result = controller.execute(
+        adminBankingTedRepository,
+        adminBankingTedEmitter,
+        logger,
+        message,
+        ctx,
+      );
+
+      await expect(result).rejects.toThrow(
+        AdminBankingTedInvalidStateException,
+      );
+      expect(mockEmitAdminBankingTedConfirmeEvent).toHaveBeenCalledTimes(0);
+    });
+  });
+  afterAll(async () => {
+    jest.restoreAllMocks();
+    await module.close();
+  });
+});

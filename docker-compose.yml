@@ -1,0 +1,2089 @@
+version: '3'
+
+services:
+  zookeeper:
+    image: zookeeper:3.4.9
+    restart: unless-stopped
+    hostname: zookeeper
+    ports:
+      - '2181:2181'
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_PORT: 2181
+      ZOO_SERVERS: server.1=zookeeper:2888:3888
+    volumes:
+      - ./data/zookeeper/data:/data
+      - ./data/zookeeper/datalog:/datalog
+
+  kafka1:
+    image: confluentinc/cp-kafka:5.3.0
+    restart: unless-stopped
+    hostname: kafka1
+    ports:
+      - '9091:9091'
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka1:19091,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9091
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_BROKER_ID: 1
+      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - ./data/kafka1/data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'kafka-topics.sh --bootstrap-server 127.0.0.1:9091 --topic __consumer_offsets --describe',
+        ]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  kafdrop:
+    profiles:
+      - local
+      - infra
+    image: obsidiandynamics/kafdrop
+    restart: unless-stopped
+    ports:
+      - '9000:9000'
+    environment:
+      KAFKA_BROKERCONNECT: 'kafka1:19091'
+    depends_on:
+      - kafka1
+
+  mailslurper:
+    profiles:
+      - local
+      - infra
+    image: marcopas/docker-mailslurper
+    restart: unless-stopped
+    ports:
+      - '2500:2500'
+      - '8080:8080'
+      - '8085:8085'
+    # volumes:
+    #    - $PWD/custom-config.json:/opt/mailslurper/config.json
+
+  redis:
+    profiles:
+      - local
+      - infra
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+
+  redisinsight:
+    profiles:
+      - local
+      - infra
+    image: redislabs/redisinsight:latest
+    restart: unless-stopped
+    ports:
+      - '8001:8001'
+    # volumes:
+    #   - ./data/redisinsight/data:/db
+    depends_on:
+      - redis
+
+  prometheus:
+    profiles:
+      - local
+      - infra
+    image: prom/prometheus:latest
+    user: root
+    restart: unless-stopped
+    ports:
+      - '8002:9090'
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./data/prometheus/data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - pushgateway
+
+  jaeger-all-in-one:
+    profiles:
+      - local
+      - infra
+    restart: unless-stopped
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - '16686:16686'
+      - '14268'
+      - '14250'
+
+  zipkin-all-in-one:
+    profiles:
+      - local
+      - infra
+    restart: unless-stopped
+    image: openzipkin/zipkin:latest
+    ports:
+      - '9411:9411'
+
+  otel-collector:
+    profiles:
+      - local
+      - infra
+    restart: unless-stopped
+    image: otel/opentelemetry-collector-contrib:0.80.0
+    ports:
+      - 1888:1888 # pprof extension
+      - 8888:8888 # Prometheus metrics exposed by the collector
+      - 8889:8889 # Prometheus exporter metrics
+      - 13133:13133 # health_check extension
+      - 4317:4317 # OTLP gRPC receiver
+      - 4318:4318 # OTLP http receiver
+      - 55679:55679 # zpages extension
+    volumes:
+      - ./deploy/otel/otel-collector.yaml:/etc/otel-collector.yaml
+    command: [--config=/etc/otel-collector.yaml]
+
+  pushgateway:
+    profiles:
+      - local
+      - infra
+    image: prom/pushgateway:latest
+    restart: unless-stopped
+    ports:
+      - '8003:9091'
+
+  mock-zenvia:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-zenvia
+    ports:
+      - '7000:8088'
+    hostname: mock-zenvia
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/zenvia:/features
+
+  mock-topazio:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-topazio
+    ports:
+      - '7001:8088'
+    hostname: mock-topazio
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/topazio:/features
+
+  mock-apilayer:
+    profiles:
+      - local
+      - admin
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-apilayer
+    ports:
+      - '7002:8088'
+    hostname: mock-apilayer
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/apilayer:/features
+
+  mock-dock:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-dock
+    ports:
+      - '7003:8088'
+    hostname: mock-dock
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/dock:/features
+
+  mock-bulksms:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-bulksms
+    ports:
+      - '7004:8088'
+    hostname: mock-bulksms
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/bulksms:/features
+
+  mock-jira:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-jira
+    ports:
+      - '7005:8088'
+    hostname: mock-jira
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/jira:/features
+
+  mock-b2c2:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-b2c2
+    ports:
+      - '7006:8088'
+    hostname: mock-b2c2
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/b2c2:/features
+
+  mock-fcm:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-fcm
+    ports:
+      - '7007:8088'
+    hostname: mock-fcm
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/fcm:/features
+
+  mock-b2c2-ws:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks/b2c2-ws
+      dockerfile: Dockerfile
+      args:
+        SERVICE: b2c2-ws
+    ports:
+      - '7008:8088'
+    hostname: b2c2-ws
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/b2c2-ws:/features
+
+  mock-payments-gateway:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-payments-gateway
+    ports:
+      - '7009:8088'
+    hostname: payments-gateway
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/payments-gateway:/features
+
+  mock-binance:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-binance
+    ports:
+      - '7010:8088'
+    hostname: mock-binance
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/binance:/features
+
+  mock-binance-ws:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks/binance-ws
+      dockerfile: Dockerfile
+      args:
+        SERVICE: binance-ws
+    ports:
+      - '7011:8088'
+    hostname: binance-ws
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/binance-ws:/features
+
+  mock-jdpi:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-jdpi
+    ports:
+      - '7012:8088'
+    hostname: jdpi
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/jdpi:/features
+
+  mock-asaas:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-asaas
+    ports:
+      - '7013:8088'
+    hostname: mock-asaas
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/asaas:/features
+
+  mock-genial:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-genial
+    ports:
+      - '7014:8088'
+    hostname: mock-genial
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/genial:/features
+
+  mock-zrobank:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/mocks
+      dockerfile: Dockerfile
+      args:
+        SERVICE: mock-zrobank
+    ports:
+      - '7015:8088'
+    hostname: mock-zrobank
+    restart: unless-stopped
+    volumes:
+      - ./deploy/mocks/zrobank:/features
+
+  zro-db:
+    profiles:
+      - local
+      - infra
+    build:
+      context: ./deploy/database
+      dockerfile: Dockerfile
+      args:
+        DATA_PASSWORD: ${DATA_PASSWORD:?DATA_PASSWORD env var is missing on .env file}
+    hostname: zro-db
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+
+  zro-db-test:
+    profiles:
+      - test
+    build:
+      context: ./deploy/database
+      dockerfile: Dockerfile
+      args:
+        DATA_PASSWORD: ${DATA_PASSWORD:?DATA_PASSWORD env var is missing on .env file}
+    hostname: zro-db-test
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+
+  zro-notifications:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: notifications
+    hostname: zro-notifications
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK NOTIFICATION MICROSERVICE'
+      APP_ENV: ${NOTIFICATIONS_APP_ENV:-local}
+      APP_LOG_LEVEL: ${NOTIFICATIONS_APP_LOG_LEVEL:-debug}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_notifications'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_notifications'
+      APP_DATABASE_LOG: ${NOTIFICATIONS_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'notifications-microservice'
+      APP_REDIS_HOST: redis
+      APP_REDIS_KEY_PREFIX: NOTIFICATIONS
+      APP_ENCRYPT_PASSWORD: ${ENCRYPT_PASSWORD:?ENCRYPT_PASSWORD env var is missing on .env file}
+      APP_MATRACA_HOST: 'mailslurper'
+      APP_MATRACA_PORT: 2500
+      APP_MATRACA_DEFAULT_SUBJECT: 'Test e-mail'
+      APP_ZENVIA_SMS_BASE_URL: 'http://mock-zenvia:8088'
+      APP_ZENVIA_SMS_AGGREGATE_ID: '1111'
+      APP_ZENVIA_SMS_AUTH: '123456'
+      APP_BULKSMS_SMS_BASE_URL: http://mock-bulksms:8088
+      APP_BULKSMS_SMS_AUTH: '123456'
+      APP_DOCK_AUTH_BASE_URL: http://mock-dock:8088
+      APP_DOCK_AUTH_CLIENT_ID: '123456'
+      APP_DOCK_AUTH_CLIENT_SECRET: '123456'
+      APP_DOCK_SMS_BASE_URL: http://mock-dock:8088
+      APP_DOCK_SMS_FROM: 'Zro Bank'
+      APP_CLOUD_MESSAGE_BASE_URL: 'http://mock-fcm:8088'
+      APP_CLOUD_MESSAGE_CLIENT_EMAIL: 'email@example.com'
+      APP_CLOUD_MESSAGE_PRIVATE_KEY: '111111'
+      APP_TRANSLATE_PATH: dist/assets/i18n
+      APP_SEND_SMS_PROVIDER_CACHE_TTL_S: 600
+    depends_on:
+      - kafka1
+      - zro-db
+      - redis
+      - mailslurper
+      - mock-zenvia
+      - mock-bulksms
+      - mock-dock
+      - mock-fcm
+
+  zro-operations:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: operations
+    hostname: zro-operations
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK OPERATIONS MICROSERVICE'
+      APP_ENV: ${OPERATIONS_APP_ENV:-local}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_operations'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_operations'
+      APP_DATABASE_LOG: ${OPERATIONS_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'operations-microservice'
+      APP_LOG_LEVEL: ${OPERATIONS_APP_LOG_LEVEL:-debug}
+      APP_NIGHTTIME_INTERVALS: ${OPERATIONS_APP_NIGHTIME_INTERVALS:-22:00;06:00 20:00;06:00}
+      APP_OPERATION_SYMBOL_CURRENCY_REAL: 'BRL'
+      APP_REDIS_HOST: 'redis'
+      APP_REDIS_KEY_PREFIX: OPERATIONS
+      APP_OPERATION_P2P_TRANSFER_TRANSACTION_TAG: P2PBT
+      APP_NOTIFICATION_EMAIL_INVITE_TAG: 'OPERATION_EMAIL_INVITE_WALLET'
+      APP_NOTIFICATION_EMAIL_INVITE_FROM: 'teste@zro.com.br'
+      APP_NOTIFICATION_EMAIL_URL_INVITE: 'localhost'
+      APP_OPERATION_EXPIRED_INVITE_H: 72
+      APP_SYNC_PENDING_WALLET_INVITATION_CRON: '0 0 */1 * * *'
+      APP_SYNC_PENDING_WALLET_INVITATION_REDIS_KEY: 'RUNNING_CRON:SYNC_PENDING_WALLET_INVITATION'
+      APP_SYNC_PENDING_WALLET_INVITATION_REDIS_LOCK_TIMEOUT: 180000
+      APP_SYNC_PENDING_WALLET_INVITATION_REDIS_REFRESH_INTERVAL: 60000
+      APP_OPERATION_PERMISSION_TYPE_ROOT_TAG: ROOT
+      APP_OPERATION_ZRO_DEFAULT_WALLET_ID: 'fd9f1148-8056-4e13-b6d5-000022f7524b'
+      APP_OPERATION_GATEWAY_CREDIT_TRANSACTION_TAG: GWCRED
+      APP_OPERATION_GATEWAY_DEBIT_TRANSACTION_TAG: GWDEB
+      APP_OPERATION_CRYPTO_TRANSACTION_TAGS_FILTER: 'CONV;CASHBACK;P2PBT;REFREWARD;P2PBTCTP'
+      APP_ZROBANK_ISPB: '26264220'
+      APP_SYNC_ACCOUNTS_CLOSURES_REPORTS_CRON: '0 0 1 * * *'
+      APP_SYNC_ACCOUNTS_CLOSURES_REPORTS_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_ACCOUNT_CLOSURE'
+      APP_SYNC_ACCOUNTS_CLOSURES_REPORTS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_ACCOUNTS_CLOSURES_REPORTS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_ACCOUNTS_CLOSURES_REPORTS_TRANSACTION_TAG: 'ACTCLOSURE'
+      APP_SYNC_ASSETS_FORFEITURES_REPORTS_CRON: '0 0 1 * * *'
+      APP_SYNC_ASSETS_FORFEITURES_REPORTS_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_ASSETS_FORFEITURES'
+      APP_SYNC_ASSETS_FORFEITURES_REPORTS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_ASSETS_FORFEITURES_REPORTS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_ASSETS_FORFEITURES_REPORTS_TRANSACTION_TAG: 'FORFEITURE'
+      APP_SYNC_EXTRA_CREDITS_REPORTS_CRON: '0 0 1 * * *'
+      APP_SYNC_EXTRA_CREDITS_REPORTS_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_EXTRA_CREDITS'
+      APP_SYNC_EXTRA_CREDITS_REPORTS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_EXTRA_CREDITS_REPORTS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_EXTRA_CREDITS_REPORTS_TRANSACTION_TAG: 'EXTRACREDIT'
+      APP_SYNC_P2P_CHATS_REPORTS_CRON: '0 0 1 * * *'
+      APP_SYNC_P2P_CHATS_REPORTS_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_P2P_CHATS'
+      APP_SYNC_P2P_CHATS_REPORTS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_P2P_CHATS_REPORTS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_P2P_CHATS_REPORTS_TRANSACTION_TAG: 'P2PTP'
+      APP_SYNC_P2P_TRANSFERS_REPORTS_CRON: '0 0 1 * * *'
+      APP_SYNC_P2P_TRANSFERS_REPORTS_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_P2P_TRANSFERS'
+      APP_SYNC_P2P_TRANSFERS_REPORTS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_P2P_TRANSFERS_REPORTS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_P2P_TRANSFERS_REPORTS_TRANSACTION_TAG: 'P2PBT'
+      APP_SYNC_DEPOSITS_RECEIVE_REPORTS_CRON: '0 0 1 * * *'
+      APP_SYNC_DEPOSITS_RECEIVE_REPORTS_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_DEPOSITS_RECEIVE'
+      APP_SYNC_DEPOSITS_RECEIVE_REPORTS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_DEPOSITS_RECEIVE_REPORTS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_DEPOSITS_RECEIVE_REPORTS_TRANSACTION_TAG: 'DEPORECEIVE'
+      APP_SYNC_CONVERSIONS_REPORTS_CRON: '0 0 1 * * *'
+      APP_SYNC_CONVERSIONS_REPORTS_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_CONVERSIONS'
+      APP_SYNC_CONVERSIONS_REPORTS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_CONVERSIONS_REPORTS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_CONVERSIONS_REPORTS_TRANSACTION_TAG: 'CONV'
+      APP_SYNC_GATEWAY_REPORTS_CRON: '0 0 1 * * *'
+      APP_SYNC_GATEWAY_REPORTS_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_GATEWAY'
+      APP_SYNC_GATEWAY_REPORTS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_GATEWAY_REPORTS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_GATEWAY_REPORTS_TRANSACTION_TAG: 'GWCRED;GWDEB'
+      APP_SYNC_UPDATE_USER_LIMIT_TRACKER_BY_INTERVAL_CRON: '0 */5 * * * *'
+      APP_SYNC_UPDATE_USER_LIMIT_TRACKER_BY_INTERVAL_REDIS_KEY: RUNNING_CRON:SYNC_UPDATE_USER_LIMIT_TRACKER_BY_INTERVAL
+      APP_SYNC_UPDATE_USER_LIMIT_TRACKER_BY_INTERVAL_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_UPDATE_USER_LIMIT_TRACKER_BY_INTERVAL_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_CREATE_OPERATION_INDEX_CRON: '0 0 0 * * *'
+      APP_SYNC_CREATE_OPERATION_INDEX_REDIS_KEY: 'RUNNING_CRON:SYNC_CREATE_OPERATION_INDEX_CRON'
+      APP_SYNC_CREATE_OPERATION_INDEX_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_CREATE_OPERATION_INDEX_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_DELETE_OPERATION_INDEX_CRON: '0 0 0 * * *'
+      APP_SYNC_DELETE_OPERATION_INDEX_REDIS_KEY: 'RUNNING_CRON:SYNC_DELETE_OPERATION_INDEX_CRON'
+      APP_SYNC_DELETE_OPERATION_INDEX_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_DELETE_OPERATION_INDEX_REDIS_REFRESH_INTERVAL: 60000
+    depends_on:
+      - kafka1
+      - zro-db
+      - redis
+
+  zro-quotations:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: quotations
+    hostname: zro-quotations
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK QUOTATIONS MICROSERVICE'
+      APP_ENV: ${QUOTATIONS_APP_ENV:-test}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_quotations'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_quotations'
+      APP_DATABASE_LOG: ${QUOTATIONS_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'quotations-microservice'
+      APP_REDIS_HOST: 'redis'
+      APP_REDIS_KEY_PREFIX: QUOTATIONS
+      APP_LOG_LEVEL: ${QUOTATIONS_APP_LOG_LEVEL:-debug}
+      APP_APILAYER_BASE_URL: 'http://mock-apilayer:8088'
+      APP_APILAYER_ACCESS_KEY: 'secrete'
+      APP_STREAM_QUOTATIONS_INTERVAL_MS: 1000
+      APP_QUOTATIONS_CACHE_DEFAULT_TTL_MS: 60000
+      APP_STREAM_QUOTATIONS_CACHE_DEFAULT_TTL_MS: 30000
+      APP_B2C2_BASE_URL: http://mock-b2c2:8088
+      APP_B2C2_AUTH_TOKEN: 'secrete'
+      APP_B2C2_WEBSOCKET_URL: ws://mock-b2c2-ws:8088
+      APP_BINANCE_BASE_URL: http://mock-binance:8088
+      APP_BINANCE_WEBSOCKET_URL: ws://mock-binance-ws:8088
+      APP_BINANCE_API_KEY: 'secrete'
+      APP_BINANCE_API_SECRET: 'secrete'
+      APP_BINANCE_SUBSCRIBE_TYPE: ticker
+      APP_MERCADO_BITCOIN_BASE_URL: http://localhost
+      APP_MERCADO_BITCOIN_WEBSOCKET_URL: ws://localhost
+      APP_MERCADO_BITCOIN_SUBSCRIBE_TYPE: ticker
+      APP_MERCADO_BITCOIN_ORDERBOOK_DEPTH: 50
+      APP_OPERATION_CURRENCY_SYMBOL: BRL
+      APP_OTC_IOF_NAME: IOF
+      APP_SYNC_CURRENCY_STREAM_QUOTATIONS_INTERVAL_MS: 5000
+      APP_EXCHANGE: ZRO
+      APP_INSTANCE_ID: 1
+      APP_PROMETHEUS_BASE_URL: http://prometheus:9090
+      APP_PROMETHEUS_PUSHGATEWAY_BASE_URL: http://pushgateway:9091
+      APP_SYNC_CURRENCY_STREAM_QUOTATIONS_REDIS_KEY: 'RUNNING_CRON:SYNC_CURRENCY_STREAM_QUOTATIONS'
+      APP_SYNC_CURRENCY_STREAM_QUOTATIONS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_CURRENCY_STREAM_QUOTATIONS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_STREAM_QUOTATIONS_REDIS_KEY: 'RUNNING_CRON:SYNC_STREAM_QUOTATIONS'
+      APP_SYNC_STREAM_QUOTATIONS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_STREAM_QUOTATIONS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_GATEWAY_STREAM_QUOTATIONS_REDIS_KEY: 'RUNNING_CRON:SYNC_GATEWAY_STREAM_QUOTATIONS'
+      APP_SYNC_GATEWAY_STREAM_QUOTATIONS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_GATEWAY_STREAM_QUOTATIONS_REDIS_REFRESH_INTERVAL: 60000
+    depends_on:
+      - kafka1
+      - zro-db
+      - redis
+      - mock-apilayer
+      - mock-b2c2
+      - zro-operations
+
+  zro-reports:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: reports
+    hostname: zro-reports
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK REPORTS MICROSERVICE'
+      APP_ENV: ${REPORTS_APP_ENV:-test}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_reports'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_reports'
+      APP_DATABASE_LOG: ${REPORTS_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'reports-microservice'
+      APP_LOG_LEVEL: ${REPORTS_APP_LOG_LEVEL:-debug}
+      APP_OPERATION_CURRENCY_TAG: REAL
+      APP_ZROBANK_ISPB: 26264220
+      APP_SYNC_CARD_OPERATION_CRON: '0 0 1 * * *'
+      APP_SYNC_CARD_OPERATION_REDIS_KEY: 'RUNNING_CRON:SYNC_CARD_OPERATION'
+      APP_SYNC_CARD_OPERATION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_CARD_OPERATION_REDIS_REFRESH_INTERVAL: 60000
+      APP_CARD_OPERATION_TAGS: 'DEBITTRANSACTION;DEBITCBK;WITHDRAW;WITHDRAWCBK;DBTCARDCRED;SALECREDCARD;SALEDEBTCARD'
+      APP_SYNC_TED_OPERATION_CRON: '0 0 1 * * *'
+      APP_SYNC_TED_OPERATION_REDIS_KEY: 'RUNNING_CRON:SYNC_TED_OPERATION'
+      APP_SYNC_TED_OPERATION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_TED_OPERATION_REDIS_REFRESH_INTERVAL: 60000
+      APP_TED_OPERATION_TAGS: 'TED;TEDRECEIVE;TEDFAILURE;TEDUNDO;TEDRECCBK'
+      APP_TED_RECEIVE_TAG: 'TEDRECEIVE'
+      APP_TED_SENT_TAG: 'TED'
+      APP_SYNC_BANK_BILLET_OPERATION_CRON: '0 0 1 * * *'
+      APP_SYNC_BANK_BILLET_OPERATION_REDIS_KEY: 'RUNNING_CRON:SYNC_BANK_BILLET_OPERATION'
+      APP_SYNC_BANK_BILLET_OPERATION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_BANK_BILLET_OPERATION_REDIS_REFRESH_INTERVAL: 60000
+      APP_BANK_BILLET_OPERATION_TAGS: 'BBP;BBPCBK;BILLETFAILURE'
+      APP_REDIS_HOST: 'redis'
+      APP_REDIS_KEY_PREFIX: 'REPORTS'
+      APP_SYNC_REPORTS_USERS_CRON: '0 0 1 * * *'
+      APP_SYNC_REPORTS_USERS_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_USERS'
+      APP_SYNC_REPORTS_USERS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_REPORTS_USERS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_REPORTS_USERS_FILE_NAME: 'VIEW_CLIENTES_AUX'
+      APP_SYNC_REPORTS_USERS_LEGAL_REPRESENTOR_CRON: '0 0 1 * * *'
+      APP_SYNC_REPORTS_USERS_LEGAL_REPRESENTOR_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_USERS_LEGAL_REPRESENTOR'
+      APP_SYNC_REPORTS_USERS_LEGAL_REPRESENTOR_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_REPORTS_USERS_LEGAL_REPRESENTOR_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_REPORTS_USERS_LEGAL_REPRESENTOR_FILE_NAME: 'VIEW_REPRESENTANTES_TITULAR_AUX'
+      APP_SYNC_REPORTS_HOLDERS_CRON: '0 1 * * *'
+      APP_SYNC_REPORTS_HOLDERS_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_HOLDERS'
+      APP_SYNC_REPORTS_HOLDERS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_REPORTS_HOLDERS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_REPORTS_HOLDERS_FILE_NAME: 'VIEW_CLIENTE_CO_TIT_AUX'
+      APP_SYNC_REPORTS_USER_CONFIGS_CRON: '0 0 1 * * *'
+      APP_SYNC_REPORTS_USER_CONFIGS_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_USER_CONFIGS'
+      APP_SYNC_REPORTS_USER_CONFIGS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_REPORTS_USER_CONFIGS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_REPORTS_USER_CONFIGS_FILE_NAME: 'VIEW_TP_CLIENTE'
+      APP_SYNC_REPORTS_PAYMENTS_ACCOUNT_HOLDER_CRON: '0 0 1 * * *'
+      APP_SYNC_REPORTS_PAYMENTS_ACCOUNT_HOLDER_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_PAYMENTS_ACCOUNT_HOLDER'
+      APP_SYNC_REPORTS_PAYMENTS_ACCOUNT_HOLDER_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_REPORTS_PAYMENTS_ACCOUNT_HOLDER_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_REPORTS_PAYMENTS_ACCOUNT_HOLDER_FILE_NAME: 'VIEW_TITULAR_AUX'
+      APP_SYNC_REPORTS_OPERATIONS_CRON: '0 * * * *'
+      APP_SYNC_REPORTS_OPERATIONS_REDIS_KEY: 'RUNNING_CRON:SYNC_REPORTS_OPERATIONS'
+      APP_SYNC_REPORTS_OPERATIONS_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_REPORTS_OPERATIONS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_REPORTS_OPERATIONS_FILE_NAME: 'VIEW_INTEG_MOVFIN_AUX'
+      APP_EGUARDIAN_EXPORT_EXTERNAL_DESTINATION: '/home'
+    depends_on:
+      - kafka1
+      - zro-db
+
+  zro-banking:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: banking
+    hostname: zro-banking
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK BANKING MICROSERVICE'
+      APP_ENV: ${BANKING_APP_ENV:-local}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_banking'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_banking'
+      APP_DATABASE_LOG: ${BANKING_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'banking-microservice'
+      APP_TOPAZIO_AUTH_BASE_URL: ${TOPAZIO_AUTH_BASE_URL}
+      APP_TOPAZIO_AUTH_CLIENT_ID: ${TOPAZIO_AUTH_CLIENT_ID}
+      APP_TOPAZIO_AUTH_CLIENT_SECRET: ${TOPAZIO_AUTH_CLIENT_SECRET}
+      APP_TOPAZIO_TRANSFER_BASE_URL: ${TOPAZIO_TRANSFER_BASE_URL}
+      APP_LOG_LEVEL: ${BANKING_APP_LOG_LEVEL:-debug}
+      APP_ZROBANK_ISPB: '26264220'
+      APP_SYNC_BANK_CRON: '0 0 12 * * *'
+      APP_SYNC_BANK_TED_CRON: '0 0 12 * * *'
+      APP_SYNC_CITY_CRON: '0 0 12 * * *'
+      APP_BACEN_TED_FILE_URL: 'https://www.bcb.gov.br/pom/spb/estatistica/port/ParticipantesSTRport.csv'
+      APP_CITY_LIST_URL: 'https://servicodados.ibge.gov.br/api/v1/localidades/municipios?view=nivelado'
+      APP_OPERATION_CURRENCY_TAG: 'REAL'
+      APP_BANKING_TED_INTERVAL_HOUR: 09:00;16:00
+      APP_OPERATION_TED_DESCRIPTION: 'Bank TED Transfer'
+      APP_OPERATION_TED_P2P_DESCRIPTION: 'Bank P2P Transfer'
+      APP_OPERATION_TED_TRANSACTION_TAG: 'TED'
+      APP_OPERATION_TED_P2P_TRANSACTION_TAG: 'P2PBT'
+      APP_ZROBANK_CODE: '82'
+      APP_BANKING_TED_CALLBACK_URL: 'localhost/webhooks/topazio/cashout/ted/notification'
+      APP_SYNC_BANK_REDIS_KEY: 'RUNNING_CRON:SYNC_BANK'
+      APP_SYNC_BANK_REDIS_LOCK_TIMEOUT: 3000000
+      APP_SYNC_BANK_REDIS_REFRESH_INTERVAL: 1800000
+      APP_SYNC_BANK_TED_REDIS_KEY: 'RUNNING_CRON:SYNC_BANK_TED'
+      APP_SYNC_BANK_TED_REDIS_LOCK_TIMEOUT: 3000000
+      APP_SYNC_BANK_TED_REDIS_REFRESH_INTERVAL: 1800000
+      APP_SYNC_CITY_REDIS_KEY: 'RUNNING_CRON:SYNC_CITY'
+      APP_SYNC_CITY_REDIS_LOCK_TIMEOUT: 3000000
+      APP_SYNC_CITY_REDIS_REFRESH_INTERVAL: 1800000
+      APP_JDPI_BASE_URL: ${JDPI_BASE_URL}
+      APP_JDPI_AUTH_CLIENT_ID: ${JDPI_AUTH_CLIENT_ID}
+      APP_JDPI_AUTH_CLIENT_SECRET: ${JDPI_AUTH_CLIENT_SECRET}
+    depends_on:
+      - kafka1
+      - zro-db
+
+  zro-compliance:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: compliance
+    hostname: zro-compliance
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK COMPLIANCE MICROSERVICE'
+      APP_ENV: ${COMPLIANCE_APP_ENV:-local}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_compliance'
+      APP_DATABASE_LOG: ${COMPLIANCE_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'compliance-microservice'
+      APP_LOG_LEVEL: ${COMPLIANCE_APP_LOG_LEVEL:-debug}
+      APP_TRANSLATE_PATH: dist/assets/i18n
+      APP_JIRA_USER_LIMIT_REQUEST_PROJECT_ID: 10006
+      APP_JIRA_USER_LIMIT_REQUEST_REPORTER_ID: 618d63f8cc2d7c00718b31db
+      APP_JIRA_USER_LIMIT_REQUEST_ISSUE_TYPE_ID: 10029
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_CLOSED_STATUS: 10666
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_RECEIVED_STATUS: 10667
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_USER_ID: customfield_10076
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_USER_LIMIT_ID: customfield_10075
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_YEARLY_LIMIT: customfield_10077
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_MONTHLY_LIMIT: customfield_10078
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_DAILY_LIMIT: customfield_10079
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_NIGHTLY_LIMIT: customfield_10080
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_MAX_AMOUNT: customfield_10081
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_MIN_AMOUNT: customfield_10082
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_MAX_AMOUNT_NIGHTLY: customfield_10083
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_MIN_AMOUNT_NIGHTLY: customfield_10084
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_ID: customfield_10089
+      APP_JIRA_WARNING_TRANSACTION_PROJECT_ID: 10006
+      APP_JIRA_WARNING_TRANSACTION_REPORTER_ID: 618d63f8cc2d7c00718b31db
+      APP_JIRA_WARNING_TRANSACTION_ISSUE_TYPE_ID: 10028
+      APP_JIRA_CUSTOM_FIELD_WARNING_TRANSACTION_OPERATION_ID: customfield_10093
+      APP_JIRA_CUSTOM_FIELD_WARNING_TRANSACTION_TRANSACTION_TAG: customfield_10095
+      APP_JIRA_CUSTOM_FIELD_WARNING_TRANSACTION_END_TO_END_ID: customfield_10097
+      APP_SYNC_WARNING_TRANSACTIONS_DUE_DATE_CRON: '0 */5 * * * *'
+      APP_JIRA_WARNING_TRANSACTION_TRANSITION_CLOSE: 21
+      APP_JIRA_WARNING_TRANSACTION_TRANSITION_IN_ANALYSIS: 11
+      APP_JIRA_WARNING_TRANSACTION_STATUS_CLOSED: 6
+      APP_JIRA_WARNING_TRANSACTION_STATUS_IN_ANALYSIS: 10033
+      APP_JIRA_WARNING_TRANSACTION_STATUS_NEW: 1
+      APP_JIRA_CUSTOM_FIELD_WARNING_TRANSACTION_REASON: 10098
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_PROJECT_ID: 10006
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_ISSUE_TYPE_ID: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_ID: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_USER_ID: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_WALLET_ID: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_TRANSACTION_TYPE_ID: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_PIX_KEY: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_PIX_KEY_TYPE: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_TYPE: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_BALANCE_TYPE: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_DAILY_TYPE: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_MONTHLY_TYPE: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_WEEKLY_TYPE: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_BALANCE: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_DAY: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_WEEK_DAY: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_MONDAY_WEEK_DAY: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_TUESDAY_WEEK_DAY: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_WEDNESDAY_WEEK_DAY: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_THURSDAY_WEEK_DAY: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_FRIDAY_WEEK_DAY: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_SATURDAY_WEEK_DAY: ''
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_SUNDAY_WEEK_DAY: ''
+      APP_SYNC_WARNING_TRANSACTIONS_REDIS_KEY: 'RUNNING_CRON:SYNC_WARNING_TRANSACTIONS'
+      APP_SYNC_WARNING_TRANSACTIONS_REDIS_LOCK_TIMEOUT: 180000
+      APP_SYNC_WARNING_TRANSACTIONS_REDIS_REFRESH_INTERVAL: 60000
+    depends_on:
+      - kafka1
+      - zro-db
+
+  zro-pix-keys:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: pix-keys
+    hostname: zro-pix-keys
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK PIX KEYS MICROSERVICE'
+      APP_ENV: ${PIX_KEYS_APP_ENV:-local}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_pix_keys'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_pix_keys'
+      APP_DATABASE_LOG: ${PIX_KEYS_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'pix-keys-microservice'
+      APP_PIX_KEY_SEND_CODE_EMAIL_TAG: 'PIX_KEY_EMAIL_VALIDATE_KEY_CODE'
+      APP_PIX_KEY_SEND_CODE_EMAIL_FROM: 'teste@zro.com.br'
+      APP_PIX_KEY_SEND_CODE_SMS_TAG: 'PIX_KEY_SMS_VALIDATE_KEY_CODE'
+      APP_LOG_LEVEL: ${PIX_KEYS_APP_LOG_LEVEL:-debug}
+      APP_SYNC_PENDING_CRON: '0 */10 * * * *'
+      APP_SYNC_PENDING_TIMESTAMP_CRON: 1800
+      APP_SYNC_CLAIM_PENDING_CRON: '0 */30 * * * *'
+      APP_SYNC_CLAIM_PENDING_TIMESTAMP_CRON: 604800
+      APP_SYNC_OWNERSHIP_PENDING_CRON: '0 */30 * * * *'
+      APP_SYNC_OWNERSHIP_PENDING_TIMESTAMP_CRON: 2592000
+      APP_SYNC_PORTABILITY_PENDING_CRON: '0 */30 * * * *'
+      APP_SYNC_PORTABILITY_PENDING_TIMESTAMP_CRON: 2592000
+      APP_SYNC_PORTABILITY_REQUEST_PENDING_CRON: '0 */30 * * * *'
+      APP_SYNC_PORTABILITY_REQUEST_PENDING_TIMESTAMP_CRON: 604800
+      APP_ZROBANK_ISPB: '26264220'
+      APP_TRANSLATE_PATH: dist/assets/i18n
+      APP_PIX_DECODED_KEY_CACHE_TTL_MS: 86400000
+      APP_REDIS_HOST: 'redis'
+      APP_REDIS_KEY_PREFIX: PIX_KEYS
+      APP_SYNC_CLAIM_PENDING_REDIS_KEY: 'RUNNING_CRON:SYNC_CLAIM_PENDING'
+      APP_SYNC_CLAIM_PENDING_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_CLAIM_PENDING_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_OWNERSHIP_PENDING_REDIS_KEY: 'RUNNING_CRON:SYNC_OWNERSHIP_PENDING'
+      APP_SYNC_OWNERSHIP_PENDING_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_OWNERSHIP_PENDING_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_PENDING_PIX_KEY_REDIS_KEY: 'RUNNING_CRON:SYNC_PENDING_PIX_KEY'
+      APP_SYNC_PENDING_PIX_KEY_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_PENDING_PIX_KEY_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_PORTABILITY_PENDING_REDIS_KEY: 'RUNNING_CRON:SYNC_PORTABILITY_PENDING'
+      APP_SYNC_PORTABILITY_PENDING_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_PORTABILITY_PENDING_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_PORTABILITY_REQUEST_PENDING_REDIS_KEY: 'RUNNING_CRON:SYNC_PORTABILITY_REQUEST_PENDING'
+      APP_SYNC_PORTABILITY_REQUEST_PENDING_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_PORTABILITY_REQUEST_PENDING_REDIS_REFRESH_INTERVAL: 60000
+      APP_NATURAL_PERSON_MAX_NUMBER_OF_KEYS: 5
+      APP_LEGAL_PERSON_MAX_NUMBER_OF_KEYS: 20
+      APP_JDPI_BASE_URL: ${JDPI_BASE_URL}
+      APP_JDPI_AUTH_CLIENT_ID: ${JDPI_AUTH_CLIENT_ID}
+      APP_JDPI_AUTH_CLIENT_SECRET: ${JDPI_AUTH_CLIENT_SECRET}
+      APP_SYNC_GET_ALL_PIX_KEY_CLAIM_CRON: '0 */30 * * * *'
+      APP_SYNC_GET_ALL_PIX_KEY_CLAIM_PAGE_SIZE: 100
+      APP_SYNC_GET_ALL_PIX_KEY_CLAIM_LIMIT_DAY: 15
+      APP_SYNC_GET_ALL_PIX_KEY_REDIS_KEY: 'RUNNING_CRON:SYNC_GET_ALL_PIX_KEY'
+      APP_SYNC_GET_ALL_PIX_KEY_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_GET_ALL_PIX_KEY_REDIS_REFRESH_INTERVAL: 60000
+      APP_DECODED_PIX_BUCKET_TEMPORAL_INCREMENT: 2
+      APP_DECODED_PIX_BUCKET_TEMPORAL_INCREMENT_INTERVAL: 60
+      APP_DECODED_PIX_BUCKET_VALID_TRY_DECREMENT_OR_INCREMENT: 1
+      APP_DECODED_PIX_BUCKET_INVALID_TRY_DECREMENT: 20
+      APP_OPEN_BANKING_BASE_URL: 'http://zro-api-open-banking:3000'
+    depends_on:
+      - kafka1
+      - zro-db
+      - redis
+      - mock-topazio
+      - mock-jdpi
+
+  zro-pix-payments:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: pix-payments
+    hostname: zro-pix-payments
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK PIX PAYMENT MICROSERVICE'
+      APP_ENV: ${PIX_PAYMENT_APP_ENV:-local}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_pix_payments'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_pix_payments'
+      APP_DATABASE_LOG: ${PIX_PAYMENT_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'pix-payments-microservice'
+      APP_TOPAZIO_AUTH_BASE_URL: ${TOPAZIO_AUTH_BASE_URL}
+      APP_TOPAZIO_AUTH_CLIENT_ID: ${TOPAZIO_AUTH_CLIENT_ID}
+      APP_TOPAZIO_AUTH_CLIENT_SECRET: ${TOPAZIO_AUTH_CLIENT_SECRET}
+      APP_TOPAZIO_KYC_BASE_URL: ${TOPAZIO_KYC_BASE_URL}
+      APP_OPERATION_CURRENCY_TAG: 'REAL'
+      APP_OPERATION_DESCRIPTION: 'PIX_PAYMENT'
+      APP_OPERATION_SEND_ACCOUNT_TRANSACTION_TAG: 'PIXSEND'
+      APP_OPERATION_SEND_KEY_TRANSACTION_TAG: 'PIXSEND'
+      APP_OPERATION_SEND_QRS_TRANSACTION_TAG: 'PIXSEND'
+      APP_OPERATION_WITHDRAWAL_QRS_TRANSACTION_TAG: 'PIXWITHDRAWAL'
+      APP_OPERATION_SEND_QRD_TRANSACTION_TAG: 'PIXSEND'
+      APP_OPERATION_WITHDRAWAL_QRD_TRANSACTION_TAG: 'PIXWITHDRAWAL'
+      APP_OPERATION_CHANGE_QRD_TRANSACTION_TAG: 'PIXCHANGE'
+      APP_OPERATION_DUEDATE_QRD_TRANSACTION_TAG: 'PIXSEND'
+      APP_OPERATION_PIX_CHANGE_TRANSACTION_TAG: 'PIXCHANGE'
+      APP_ZROBANK_ISPB: '26264220'
+      APP_OPERATION_SEND_DEVOLUTION_TRANSACTION_TAG: 'PIXDEVSEND'
+      APP_OPERATION_PIX_RECEIVED_DEPOSIT_TRANSACTION_TAG: 'PIXREC'
+      APP_OPERATION_PIX_DEVOLUTION_RECEIVED_TRANSACTION_TAG: 'PIXDEVREC'
+      APP_OPERATION_REFUND_TRANSACTION_TAG: 'PIXREFUND'
+      APP_OPERATION_SEND_PIX_REFUND_DEVOLUTION_TRANSACTION_TAG: 'PIXREFUNDDEV'
+      APP_LOG_LEVEL: ${PIX_PAYMENT_APP_LOG_LEVEL:-debug}
+      APP_SYNC_SCHEDULED_PAYMENT_CRON: '0 */5 * * * *'
+      APP_SYNC_WAITING_PAYMENT_CRON: '0 */5 * * * *'
+      APP_SYNC_WAITING_PIX_DEVOLUTION_CRON: '0 */5 * * * *'
+      APP_SYNC_WAITING_PIX_REFUND_DEVOLUTION_CRON: '0 */5 * * * *'
+      APP_SYNC_WAITING_WARNING_PIX_DEVOLUTION_CRON: '0 */5 * * * *'
+      APP_PIX_DEVOLUTION_MAX_NUMBER: '0'
+      APP_PIX_REFUND_DEVOLUTION_MAX_NUMBER: '0'
+      APP_PIX_DEPOSIT_DEVOLUTION_INTERVAL_DAYS: 1
+      APP_PIX_TRANSACTION_REFUND_DEVOLUTION_INTERVAL_DAYS: 3
+      APP_AGENT_MOD_WITHDRAWAL: 'AGTEC'
+      APP_AGENT_MOD_CHANGE: 'AGTOT'
+      APP_TRANSLATE_PATH: dist/assets/i18n
+      APP_JIRA_PROTOCOL: http
+      APP_JIRA_BASE_URL: mock-jira
+      APP_JIRA_PORT: 8088
+      APP_JIRA_AUTH_USER: nobody@zrobank.com.br
+      APP_JIRA_AUTH_TOKEN: 'secrete'
+      APP_JIRA_INFRACTION_REPORTER_ID: 10001
+      APP_JIRA_INFRACTION_PROJECT_ID: 10006
+      APP_JIRA_INFRACTION_ISSUE_TYPE_ID: 10020
+      APP_JIRA_INFRACTION_DUE_DATE: 7
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_OPERATION_ID: customfield_10051
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_END_TO_END_ID: customfield_10052
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_INFRACTION_ID: customfield_10053
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_DEBITED_PARTICIPANT: customfield_10056
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_CREDIT_PARTICIPANT: customfield_10057
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_REASON: customfield_10054
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_REASON_FRAUD: 10044
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_REASON_REQUEST_REFUND: 10045
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_REASON_CANCEL_DEVOLUTION: 10046
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_REPORTER: customfield_10058
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_REPORTER_DEBITED_PARTICIPANT: 10047
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_REPORTER_CREBITED_PARTICIPANT: 10048
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_RESOLUTION: customfield_10059
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_RESOLUTION_AGREE: 10049
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_RESOLUTION_DISAGREE: 10050
+      APP_JIRA_INFRACTION_TRANSITION_CREATE: 1
+      APP_JIRA_INFRACTION_TRANSITION_OPEN: 11
+      APP_JIRA_INFRACTION_TRANSITION_RECEIVE: 51
+      APP_JIRA_INFRACTION_TRANSITION_IN_ANALYSIS: 61
+      APP_JIRA_INFRACTION_TRANSITION_CLOSE: 41
+      APP_JIRA_INFRACTION_TRANSITION_ACK_RECEIVED: 31
+      APP_JIRA_INFRACTION_TRANSITION_CANCEL: 71
+      APP_JIRA_INFRACTION_TRANSITION_OPEN_FAIL: 81
+      APP_JIRA_REFUND_REPORTER_ID: 10002
+      APP_JIRA_REFUND_PROJECT_ID: 10008
+      APP_JIRA_REFUND_ISSUE_TYPE_ID: 10021
+      APP_JIRA_REFUND_CUSTOM_FIELD_OPERATION_ID: customfield_10067
+      APP_JIRA_REFUND_CUSTOM_FIELD_END_TO_END_ID: customfield_10069
+      APP_JIRA_REFUND_CUSTOM_FIELD_AMOUNT: customfield_10068
+      APP_JIRA_REFUND_CUSTOM_FIELD_REASON: customfield_10070
+      APP_JIRA_REFUND_CUSTOM_FIELD_FRAUD_REASON: 10051
+      APP_JIRA_REFUND_CUSTOM_FIELD_OPERATION_FLAW_REASON: 10052
+      APP_JIRA_REFUND_CUSTOM_FIELD_CANCELLED_REASON: 10053
+      APP_JIRA_REFUND_TRANSITION_CANCELLED: 61
+      APP_JIRA_REFUND_TRANSITION_CLOSED: 6
+      APP_JIRA_REFUND_TRANSITION_RECEIVED: 81
+      APP_WARNING_PIX_DEPOSIT_CEF_ISPB: '00360305'
+      APP_WARNING_PIX_DEPOSIT_SANTANDER_ISPB: '90400888'
+      APP_WARNING_PIX_DEPOSIT_MIN_AMOUNT: 40000
+      APP_WARNING_PIX_DEPOSIT_SANTANDER_CNPJ: '90400888000142'
+      APP_WARNING_PIX_DEPOSIT_MAX_OCCUPATION_INCOME: 100000
+      APP_WARNING_PIX_DEPOSIT_SKIP_LIST_TTL: 600000
+      APP_WARNING_PIX_DEPOSIT_MIN_AMOUNT_TO_WARNING_INCOME: 150000
+      APP_WARNING_PIX_DEPOSIT_RECEITA_FEDERAL_CNPJ: '00394460005887'
+      APP_WARNING_PIX_DEPOSIT_RECEIVED_DEPOSIT_TTL: 600000
+      APP_WARNING_PIX_DEPOSIT_HASH_TTL: 86400000
+      APP_JIRA_MESSAGE_USER_REQUEST_WARNING_PIX_DEVOLUTION: 'Estorno realizado pelo próprio usuário pelo aplicativo.'
+      APP_SYNC_SCHEDULED_PAYMENT_REDIS_KEY: 'RUNNING_CRON:SYNC_SCHEDULED_PAYMENT'
+      APP_SYNC_SCHEDULED_PAYMENT_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_SCHEDULED_PAYMENT_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_WAITING_PAYMENT_REDIS_KEY: 'RUNNING_CRON:SYNC_WAITING_PAYMENT'
+      APP_SYNC_WAITING_PAYMENT_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_WAITING_PAYMENT_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_WAITING_PIX_DEVOLUTION_REDIS_KEY: 'RUNNING_CRON:SYNC_WAITING_PIX_DEVOLUTION'
+      APP_SYNC_WAITING_PIX_DEVOLUTION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_WAITING_PIX_DEVOLUTION_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_WAITING_PIX_REFUND_DEVOLUTION_REDIS_KEY: 'RUNNING_CRON:SYNC_WAITING_PIX_REFUND_DEVOLUTION'
+      APP_SYNC_WAITING_PIX_REFUND_DEVOLUTION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_WAITING_PIX_REFUND_DEVOLUTION_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_WAITING_WARNING_PIX_DEVOLUTION_REDIS_KEY: 'RUNNING_CRON:SYNC_WAITING_WARNING_PIX_DEVOLUTION'
+      APP_SYNC_WAITING_WARNING_PIX_DEVOLUTION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_WAITING_WARNING_PIX_DEVOLUTION_REDIS_REFRESH_INTERVAL: 60000
+      APP_JDPI_BASE_URL: ${JDPI_BASE_URL}
+      APP_JDPI_AUTH_CLIENT_ID: ${JDPI_AUTH_CLIENT_ID}
+      APP_JDPI_AUTH_CLIENT_SECRET: ${JDPI_AUTH_CLIENT_SECRET}
+      APP_OPEN_BANKING_BASE_URL: 'http://zro-api-open-banking:3000'
+      APP_PIX_PAYMENT_UPDATED_AT_THRESHOLD_SECONDS: 40
+      APP_SYNC_WAITING_RECENT_PIX_PAYMENT_CRON: '0 */5 * * * *'
+      APP_SYNC_WAITING_RECENT_PIX_PAYMENT_REDIS_KEY: 'RUNNING_CRON:SYNC_WAITING_PIX_PAYMENT'
+      APP_SYNC_WAITING_RECENT_PIX_PAYMENT_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_WAITING_RECENT_PIX_PAYMENT_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_WAITING_RECENT_PIX_DEVOLUTION_CRON: '0 */5 * * * *'
+      APP_SYNC_WAITING_RECENT_PIX_DEVOLUTION_REDIS_KEY: 'RUNNING_CRON:SYNC_WAITING_PIX_DEVOLUTION'
+      APP_SYNC_WAITING_RECENT_PIX_DEVOLUTION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_WAITING_RECENT_PIX_DEVOLUTION_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_WAITING_RECENT_PIX_REFUND_DEVOLUTION_CRON: '0 */5 * * * *'
+      APP_SYNC_WAITING_RECENT_PIX_REFUND_DEVOLUTION_REDIS_KEY: 'RUNNING_CRON:SYNC_WAITING_PIX_REFUND_DEVOLUTION'
+      APP_SYNC_WAITING_RECENT_PIX_REFUND_DEVOLUTION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_WAITING_RECENT_PIX_REFUND_DEVOLUTION_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_WAITING_RECENT_WARNING_PIX_DEVOLUTION_CRON: '0 */5 * * * *'
+      APP_SYNC_WAITING_RECENT_WARNING_PIX_DEVOLUTION_REDIS_KEY: 'RUNNING_CRON:SYNC_WAITING_RECENT_WARNING_PIX_DEVOLUTION'
+      APP_SYNC_WAITING_RECENT_WARNING_PIX_DEVOLUTION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_WAITING_RECENT_WARNING_PIX_DEVOLUTION_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_PIX_FRAUD_DETECTION_CRON: '0 */5 * * * *'
+      APP_SYNC_PIX_FRAUD_DETECTION_REDIS_KEY: 'RUNNING_CRON:SYNC_PIX_FRAUD_DETECTION'
+      APP_SYNC_PIX_FRAUD_DETECTION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_PIX_FRAUD_DETECTION_REDIS_REFRESH_INTERVAL: 60000
+      APP_JIRA_PIX_FRAUD_DETECTION_PROJECT_ID: 10006
+      APP_JIRA_PIX_FRAUD_DETECTION_REPORTER_ID: 618d63f8cc2d7c00718b31db
+      APP_JIRA_PIX_FRAUD_DETECTION_ISSUE_TYPE_ID: 10037
+      APP_JIRA_PIX_FRAUD_DETECTION_EXTERNAL_ID: customfield_10172
+      APP_JIRA_PIX_FRAUD_DETECTION_DOCUMENT: customfield_10173
+      APP_JIRA_PIX_FRAUD_DETECTION_FRAUD_TYPE: customfield_10174
+      APP_JIRA_PIX_FRAUD_DETECTION_FRAUD_TYPE_FALSE_IDENTIFICATION: 10144
+      APP_JIRA_PIX_FRAUD_DETECTION_FRAUD_TYPE_DUMMY_ACCOUNT: 10145
+      APP_JIRA_PIX_FRAUD_DETECTION_FRAUD_TYPE_FRAUDSTER_ACCOUNT: 10146
+      APP_JIRA_PIX_FRAUD_DETECTION_FRAUD_TYPE_OTHER: 10147
+      APP_JIRA_PIX_FRAUD_DETECTION_KEY: customfield_10175
+      APP_JIRA_PIX_FRAUD_DETECTION_STATUS_REGISTERED: 8
+      APP_JIRA_PIX_FRAUD_DETECTION_STATUS_RECEIVED: 5
+      APP_JIRA_PIX_FRAUD_DETECTION_STATUS_CANCELED: 7
+      APP_JIRA_PIX_FRAUD_DETECTION_STATUS_NEW: 1
+      APP_JIRA_PIX_FRAUD_DETECTION_TRANSITION_CANCEL_RECEIVED: 71
+      APP_JIRA_PIX_FRAUD_DETECTION_TRANSITION_CANCEL_REGISTERED: 91
+      APP_JIRA_PIX_FRAUD_DETECTION_TRANSITION_RECEIVED: 51
+      APP_SYNC_PIX_REFUND_CRON: '0 */1 * * * *'
+      APP_SYNC_PIX_REFUND_REDIS_KEY: RUNNING_CRON:SYNC_PIX_REFUND
+      APP_SYNC_PIX_REFUND_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_PIX_REFUND_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_PIX_INFRACTION_CRON: '0 */1 * * * *'
+      APP_SYNC_PIX_INFRACTION_REDIS_KEY: RUNNING_CRON:SYNC_PIX_INFRACTION
+      APP_SYNC_PIX_INFRACTION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_PIX_INFRACTION_REDIS_REFRESH_INTERVAL: 60000
+    depends_on:
+      - kafka1
+      - zro-db
+      - zro-banking
+      - mock-topazio
+      - mock-jdpi
+      - mock-jira
+
+  zro-users:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: users
+    hostname: zro-users
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK USERS MICROSERVICE'
+      APP_ENV: ${USERS_APP_ENV:-local}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_users'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_users'
+      APP_DATABASE_LOG: ${USERS_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'users-microservice'
+      APP_SYNC_USER_CRON: '0 */1 * * * *'
+      APP_SYNC_USER_EXPIRATION_IN_MINUTES: 2
+      APP_USER_SEND_CODE_AUTH_SMS_TAG: 'USER_SMS_VALIDATE_KEY_CODE'
+      APP_LOG_LEVEL: ${USERS_APP_LOG_LEVEL:-debug}
+      APP_REFERRAL_REWARD_VALID_CONVERSION_TRANSACTION_TAG: CONV
+      APP_REFERRAL_REWARD_MIN_LENGTH: 3
+      APP_REFERRAL_REWARD_MIN_ACCOUNT_CREATED_AT_IN_MONTH: 12
+      APP_REFERRAL_REWARD_CASHBACK_AMOUNT_BPS: 10
+      APP_SYNC_REFERRAL_REWARD_CONVERSION_CASHBACK_CRON: 0 0 0 * * *
+      APP_SYNC_REFERRAL_REWARD_CONVERSION_CASHBACK_TRANSACTION_TAG: 'Conversion: referral award'
+      APP_SYNC_REFERRAL_REWARD_INTERVAL_START_DAYS: 3
+      APP_SYNC_REFERRAL_REWARD_INTERVAL_END_DAYS: 1
+      APP_SYNC_REFERRAL_REWARD_CONVERSION_CASHBACK_CURRENCY_SYMBOL: BTC
+      APP_SYNC_REFERRAL_REWARD_CONVERSION_CURRENCY_SYMBOL: BRL
+      APP_SYNC_USER_FORGOT_PASSWORD_PENDING_CRON: '0 */1 * * * *'
+      APP_SYNC_USER_FORGOT_PASSWORD_PENDING_TIMESTAMP_CRON: 600
+      APP_SYNC_USER_FORGOT_PASSWORD_PENDING_REDIS_KEY: 'RUNNING_CRON:SYNC_USER_FORGOT_PASSWORD_PENDING'
+      APP_SYNC_USER_FORGOT_PASSWORD_PENDING_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_USER_FORGOT_PASSWORD_PENDING_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_REFERRAL_REWARD_CONVERSION_CASHBACK_REDIS_KEY: 'RUNNING_CRON:SYNC_REFERRAL_REWARD_CONVERSION_CASHBACK'
+      APP_SYNC_REFERRAL_REWARD_CONVERSION_CASHBACK_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_REFERRAL_REWARD_CONVERSION_CASHBACK_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_USER_REDIS_KEY: 'RUNNING_CRON:SYNC_USER'
+      APP_SYNC_USER_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_USER_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_USER_ACTIVE_CRON: '0 17 * * * *'
+      APP_SYNC_USER_ACTIVE_REDIS_KEY: 'RUNNING_CRON:SYNC_ACTIVE_USER'
+      APP_SYNC_USER_ACTIVE_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_USER_ACTIVE_REDIS_REFRESH_INTERVAL: 60000
+      APP_USER_FORGOT_PASSWORD_EMAIL_TAG: 'API_USERS_EMAIL_VALIDATE_CODE'
+      APP_USER_FORGOT_PASSWORD_EMAIL_FROM: 'teste@zro.com.br'
+    depends_on:
+      - kafka1
+      - zro-db
+
+  zro-api-users:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/api/Dockerfile
+      args:
+        SERVICE: api-users
+    ports:
+      - '3000:3000'
+    hostname: zro-api-users
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK API USERS'
+      APP_ENV: ${API_USERS_APP_ENV:-local}
+      APP_JWT_TOKEN: ${API_USERS_APP_JWT_TOKEN:?API_USERS_APP_JWT_TOKEN env var is missing on .env file}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'api-users-microservice'
+      APP_PORT: 3000
+      APP_GLOBAL_THROTTLE_LIMIT: 10
+      APP_GLOBAL_THROTTLE_TTL: 1
+      APP_TRANSLATE_PATH: dist/assets/i18n
+      APP_OPERATION_CURRENCY_TAG: 'REAL'
+      APP_GOOGLE_RECAPTCHA_PROJECT_ID: test
+      APP_GOOGLE_RECAPTCHA_FILE_KEY_PATH: test
+      APP_GOOGLE_RECAPTCHA_SCORE_LIMIT: test
+      APP_REDIS_HOST: 'redis'
+      APP_REDIS_KEY_PREFIX: API_USERS
+      APP_STORAGE_BASE_URL: 'http://zro-storage:3000'
+      APP_PAYMENTS_GATEWAY_BASE_URL: 'localhost'
+      APP_PAYMENTS_GATEWAY_API_TOKEN: 'test'
+      APP_CONVERSION_SYSTEM: 'ZROBANK'
+    depends_on:
+      - kafka1
+      - redis
+      - zro-users
+      - zro-pix-keys
+      - zro-operations
+      - zro-notifications
+      - zro-pix-payments
+      - zro-banking
+      - zro-storage
+      - zro-utils
+      - zro-otc
+      - zro-quotations
+      - zro-payments-gateway
+
+  zro-api-topazio:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: api-topazio
+    ports:
+      - '3004:3000'
+    hostname: zro-api-topazio
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK API TOPAZIO MICROSERVICE'
+      APP_ENV: ${API_TOPAZIO_APP_ENV:-local}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_api_topazio'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_api_topazio'
+      APP_DATABASE_LOG: ${API_TOPAZIO_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'api-topazio-microservice'
+      APP_PORT: 3000
+      APP_LOG_LEVEL: ${API_TOPAZIO_APP_DATABASE_LOG_LEVEL:-debug}
+      APP_API_KEY: '1234'
+      APP_ZROBANK_ISPB: '26264220'
+      APP_SYNC_PIX_STATEMENT_CRON: '0 */5 * * * *'
+      APP_SYNC_PIX_STATEMENT_INTERVAL_DAYS: 7
+      APP_TRANSLATE_PATH: 'apps/api-topazio/assets/i18n'
+      APP_SYNC_PIX_STATEMENT_REDIS_KEY: 'RUNNING_CRON:SYNC_PIX_STATEMENT'
+      APP_SYNC_PIX_STATEMENT_REDIS_LOCK_TIMEOUT: 3000000
+      APP_SYNC_PIX_STATEMENT_REDIS_REFRESH_INTERVAL: 1800000
+      APP_UPDATE_PIX_STATEMENT_REDIS_KEY: 'RUNNING_CRON:UPDATE_PIX_STATEMENT'
+      APP_UPDATE_PIX_STATEMENT_REDIS_LOCK_TIMEOUT: 3000000
+      APP_UPDATE_PIX_STATEMENT_REDIS_REFRESH_INTERVAL: 1800000
+      APP_JDPI_BASE_URL: ${JDPI_BASE_URL}
+      APP_JDPI_AUTH_CLIENT_ID: ${JDPI_AUTH_CLIENT_ID}
+      APP_JDPI_AUTH_CLIENT_SECRET: ${JDPI_AUTH_CLIENT_SECRET}
+    depends_on:
+      - kafka1
+      - zro-db
+      - zro-pix-keys
+      - zro-pix-payments
+
+  zro-api-jira:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: api-jira
+    ports:
+      - '3006:3000'
+    hostname: zro-api-jira
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK API JIRA MICROSERVICE'
+      APP_ENV: ${API_JIRA_APP_ENV:-local}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_api_jira'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_api_jira'
+      APP_DATABASE_LOG: ${API_JIRA_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'api-jira-microservice'
+      APP_BROKER_MAX_RETRY_TIME: 30000
+      APP_BROKER_INITIAL_RETRY_TIME: 5000
+      APP_BROKER_RETRIES: 5
+      APP_PORT: 3000
+      APP_API_KEY: 1234
+      APP_LOG_LEVEL: ${API_JIRA_APP_DATABASE_LOG_LEVEL:-debug}
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_OPERATION_ID: customfield_10051
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_RESOLUTION: customfield_10059
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_RESOLUTION_DETAILS: customfield_10055
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_RESOLUTION_AGREE: 10049
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_RESOLUTION_DISAGREE: 10050
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_REASON: customfield_10054
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_REASON_FRAUD: 10044
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_REASON_REQUEST_REFUND: 10045
+      APP_JIRA_INFRACTION_CUSTOM_FIELD_REASON_CANCEL_DEVOLUTION: 10046
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_USER_LIMIT_REQUEST_ID: customfield_10085
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_RESOLUTION: customfield_10085
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_RESOLUTION_APPROVED: 10054
+      APP_JIRA_USER_LIMIT_REQUEST_CUSTOM_FIELD_RESOLUTION_REJECTED: 10055
+      APP_JIRA_USER_LIMIT_REQUEST_STATUS_CLOSED: 6
+      APP_JIRA_INFRACTION_STATUS_CLOSED: 6
+      APP_JIRA_INFRACTION_STATUS_CANCELLED: 10035
+      APP_JIRA_INFRACTION_STATUS_NEW: 1
+      APP_JIRA_INFRACTION_STATUS_OPENED: 10030
+      APP_JIRA_INFRACTION_STATUS_IN_ANALYSIS: 10033
+      APP_JIRA_REFUND_CUSTOM_FIELD_OPERATION_ID: customfield_10067
+      APP_JIRA_REFUND_CUSTOM_FIELD_RESOLUTION: customfield_10059
+      APP_JIRA_REFUND_CUSTOM_FIELD_RESOLUTION_DETAILS: customfield_10055
+      APP_JIRA_REFUND_CUSTOM_FIELD_RESOLUTION_ACCOUNT_CLOSURE: 10049
+      APP_JIRA_REFUND_CUSTOM_FIELD_RESOLUTION_CANNOT_REFUND: 10050
+      APP_JIRA_REFUND_CUSTOM_FIELD_RESOLUTION_NO_BALANCE: 10051
+      APP_JIRA_REFUND_CUSTOM_FIELD_RESOLUTION_OTHER: 10052
+      APP_JIRA_REFUND_CUSTOM_FIELD_REASON: customfield_10070
+      APP_JIRA_REFUND_CUSTOM_FIELD_FRAUD_REASON: 10051
+      APP_JIRA_REFUND_CUSTOM_FIELD_OPERATION_FLAW_REASON: 10052
+      APP_JIRA_REFUND_CUSTOM_FIELD_CANCELLED_REASON: 10053
+      APP_JIRA_REFUND_STATUS_CLOSED: 6
+      APP_JIRA_REFUND_STATUS_CANCELLED: 10035
+      APP_JIRA_WARNING_TRANSACTION_CUSTOM_FIELD_RESOLUTION: customfield_10096
+      APP_JIRA_WARNING_TRANSACTION_CUSTOM_FIELD_RESOLUTION_APPROVED: 10063
+      APP_JIRA_WARNING_TRANSACTION_CUSTOM_FIELD_RESOLUTION_REJECTED: 10062
+      APP_JIRA_WARNING_TRANSACTION_STATUS_CLOSED: 6
+      APP_JIRA_WARNING_TRANSACTION_CUSTOM_FIELD_OPERATION_ID: customfield_10093
+      APP_JIRA_WARNING_TRANSACTION_CUSTOM_FIELD_REPLY_MESSAGE: customfield_10099
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_CUSTOM_FIELD_RESOLUTION: customfield_10110
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_CUSTOM_FIELD_RESOLUTION_APPROVED: 10078
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_CUSTOM_FIELD_RESOLUTION_REJECTED: 10079
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_STATUS_CLOSED: 6
+      APP_JIRA_USER_WITHDRAW_SETTING_REQUEST_CUSTOM_FIELD_USER_WITHDRAW_SETTING_REQUEST_ID: customfield_10100
+      APP_JIRA_FRAUD_DETECTION_STATUS_REGISTERED: 1
+      APP_JIRA_FRAUD_DETECTION_STATUS_CANCELLED: 2
+      APP_JIRA_FRAUD_DETECTION_CUSTOM_FIELD_DOCUMENT: customfield_10100
+      APP_JIRA_FRAUD_DETECTION_CUSTOM_FIELD_KEY: customfield_10101
+      APP_JIRA_FRAUD_DETECTION_CUSTOM_FIELD_FRAUD_TYPE: customfield_10102
+      APP_JIRA_FRAUD_DETECTION_CUSTOM_FIELD_FRAUD_TYPE_FALSE_IDENTIFICATION: customfield_10103
+      APP_JIRA_FRAUD_DETECTION_CUSTOM_FIELD_FRAUD_TYPE_DUMMY_ACCOUNT: customfield_10104
+      APP_JIRA_FRAUD_DETECTION_CUSTOM_FIELD_FRAUD_TYPE_FRAUDSTER_ACCOUNT: customfield_10105
+      APP_JIRA_FRAUD_DETECTION_CUSTOM_FIELD_FRAUD_TYPE_OTHER: customfield_10106
+    depends_on:
+      - kafka1
+      - zro-db
+      - zro-pix-payments
+
+  zro-api-paas:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/api/Dockerfile
+      args:
+        SERVICE: api-paas
+    ports:
+      - '3007:3000'
+    hostname: zro-api-paas
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK API PAAS MICROSERVICE'
+      APP_ENV: ${API_PAAS_APP_ENV:-local}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'api-paas-microservice'
+      APP_PORT: 3000
+      APP_LOG_LEVEL: ${API_PAAS_APP_DATABASE_LOG_LEVEL:-debug}
+      APP_TRANSLATE_PATH: dist/assets/i18n
+      APP_OPERATION_CURRENCY_TAG: 'REAL'
+      APP_REDIS_HOST: 'redis'
+      APP_REDIS_KEY_PREFIX: API_PAAS
+      APP_CONVERSION_SYSTEM: 'CAAS'
+    depends_on:
+      - kafka1
+      - zro-db
+      - redis
+
+  zro-api-grafana:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/api/Dockerfile
+      args:
+        SERVICE: api-grafana
+    ports:
+      - '3008:3000'
+    hostname: zro-api-grafana
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK API GRAFANA'
+      APP_ENV: ${API_GRAFANA_APP_ENV:-local}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'api-grafana-microservice'
+      APP_PORT: 3000
+      APP_GLOBAL_THROTTLE_LIMIT: 10
+      APP_GLOBAL_THROTTLE_TTL: 1
+      APP_TRANSLATE_PATH: dist/assets/i18n
+      APP_LOG_LEVEL: ${API_GRAFANA_APP_DATABASE_LOG_LEVEL:-debug}
+      APP_API_KEY: 1234
+    depends_on:
+      - kafka1
+      - zro-utils
+
+  zro-api-asaas:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/api/Dockerfile
+      args:
+        SERVICE: api-asaas
+    ports:
+      - '3009:3000'
+    hostname: zro-api-asaas
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK API ASAAS'
+      APP_ENV: ${API_ASAAS_APP_ENV:-local}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'api-asaas-microservice'
+      APP_PORT: 3000
+      APP_GLOBAL_THROTTLE_LIMIT: 10
+      APP_GLOBAL_THROTTLE_TTL: 1
+      APP_TRANSLATE_PATH: dist/assets/i18n
+      APP_LOG_LEVEL: ${API_ASAAS_APP_DATABASE_LOG_LEVEL:-debug}
+    depends_on:
+      - kafka1
+      - zro-pix-payments
+      - zro-pix-keys
+
+  zro-api-genial:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/api/Dockerfile
+      args:
+        SERVICE: api-genial
+    ports:
+      - '3010:3000'
+    hostname: zro-api-genial
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK API GENIAL'
+      APP_ENV: ${API_GENIAL_APP_ENV:-local}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'api-genial-microservice'
+      APP_PORT: 3000
+      APP_GLOBAL_THROTTLE_LIMIT: 10
+      APP_GLOBAL_THROTTLE_TTL: 1
+      APP_TRANSLATE_PATH: dist/assets/i18n
+      APP_LOG_LEVEL: ${API_GENIAL_APP_DATABASE_LOG_LEVEL:-debug}
+    depends_on:
+      - kafka1
+      - zro-pix-payments
+      - zro-pix-keys
+
+  zro-api-pix-zro-pay:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/api/Dockerfile
+      args:
+        SERVICE: api-pix-zro-pay
+    ports:
+      - '3011:3000'
+    hostname: zro-api-pix-zro-pay
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK API PIX ZRO PAY'
+      APP_ENV: ${API_PIX_ZRO_PAY_APP_ENV:-local}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'api-pix-zro-pay-microservice'
+      APP_PORT: 3000
+      APP_GLOBAL_THROTTLE_LIMIT: 10
+      APP_GLOBAL_THROTTLE_TTL: 1
+      APP_TRANSLATE_PATH: dist/assets/i18n
+      APP_LOG_LEVEL: ${API_PIX_ZRO_PAY_APP_DATABASE_LOG_LEVEL:-debug}
+    depends_on:
+      - kafka1
+      - zro-pix-zro-pay
+
+  zro-api-open-banking:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/api/Dockerfile
+      args:
+        SERVICE: api-open-banking
+    ports:
+      - '3012:3000'
+    hostname: zro-api-open-banking
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK API OPEN BANKING MICROSERVICE'
+      APP_PATH: 'apps/api-open-banking'
+      APP_ENV: ${API_OPEN_BANKING_APP_ENV:-local}
+      APP_LOG_LEVEL: ${API_OPEN_BANKING_APP_DATABASE_LOG_LEVEL:-debug}
+      APP_PORT: 3000
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'api-open-banking-microservice'
+      APP_JWKS_FILE_PATH: 'dist/assets/jwks-homolog.json'
+    depends_on:
+      - kafka1
+      - zro-pix-payments
+
+  zro-otc:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: otc
+    hostname: zro-otc
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK OTC MICROSERVICE'
+      APP_ENV: ${OTC_APP_ENV:-local}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_otc'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_otc'
+      APP_DATABASE_LOG: ${OTC_APP_DATABASE_LOG:-true}
+      APP_STORAGE_BASE_URL: 'http://zro-storage:3000'
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'otc-microservice'
+      APP_LOG_LEVEL: ${OTC_APP_LOG_LEVEL:-debug}
+      APP_REDIS_HOST: 'redis'
+      APP_REDIS_KEY_PREFIX: OTC
+      APP_B2C2_BASE_URL: 'http://mock-b2c2:8088'
+      APP_B2C2_WEBSOCKET_URL: 'ws://mock-b2c2-ws:8088'
+      APP_B2C2_AUTH_TOKEN: '1234'
+      APP_BINANCE_BASE_URL: http://mock-binance:8088
+      APP_BINANCE_WEBSOCKET_URL: ws://mock-binance-ws:8088
+      APP_BINANCE_API_KEY: 'secrete'
+      APP_BINANCE_API_SECRET: 'secrete'
+      APP_BINANCE_SUBSCRIBE_TYPE: ticker
+      APP_OPERATION_CONVERSION_TRANSACTION_TAG: 'CONV'
+      APP_OPERATION_SYMBOL_CURRENCY_MID_QUOTE: 'USD'
+      APP_OPERATION_CONVERSION_DEPOSIT_DESCRIPTION: 'Conversion: deposit'
+      APP_OPERATION_CONVERSION_WITHDRAWAL_DESCRIPTION: 'Conversion: withdrawal'
+      APP_SYNC_MARKETING_PENDING_CRYPTO_ORDERS_INTERVAL_MS: 1000
+      APP_OPERATION_CASHBACK_TRANSACTION_TAG: 'CASHBACK'
+      APP_SYNC_MARKETING_PENDING_CRYPTO_ORDERS_REDIS_KEY: 'RUNNING_CRON:SYNC_MARKETING_PENDING_CRYPTO_ORDERS'
+      APP_SYNC_MARKETING_PENDING_CRYPTO_ORDERS_REDIS_LOCK_TIMEOUT: 90000
+      APP_SYNC_MARKETING_PENDING_CRYPTO_ORDERS_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_CREATE_REMITTANCE_CRON: '*/30 * * * * *'
+      APP_SYNC_CREATE_REMITTANCE_REDIS_KEY: 'RUNNING_CRON:SYNC_CREATE_REMITTANCE'
+      APP_SYNC_CREATE_REMITTANCE_REDIS_LOCK_TIMEOUT: 90000
+      APP_SYNC_CREATE_REMITTANCE_REDIS_REFRESH_INTERVAL: 60000
+      APP_REMITTANCE_DEFAULT_SETTLEMENT_DATE: 'D0;D0'
+      APP_ZROBANK_PARTNER_ID: 112233
+      APP_TOPAZIO_AUTH_BASE_URL: 'localhost'
+      APP_TOPAZIO_AUTH_CLIENT_ID: alpine
+      APP_TOPAZIO_AUTH_CLIENT_SECRET: secret
+      APP_TOPAZIO_EXCHANGE_QUOTATION_BASE_URL: 'localhost'
+      APP_TOPAZIO_EXCHANGE_CONTRACT_BASE_URL: 'localhost'
+      APP_PROMETHEUS_BASE_URL: 'localhost'
+      APP_PROMETHEUS_PUSHGATEWAY_BASE_URL: 'localhost'
+      APP_OPERATION_CURRENCY_SYMBOL_USD: 'USD'
+      APP_SYNC_UPDATE_CRYPTO_REPORT_CRON: '*/5 * * * *'
+      APP_MERCADO_BITCOIN_HISTORICAL_PRICE_BASE_URL: 'https://www.mercadobitcoin.net/api'
+      APP_SYNC_UPDATE_CRYPTO_REPORT_PAGE_SIZE: 100
+      APP_ZROBANK_LOGO_URL: 'https://www.zrobank.com.br/wp-content/themes/zrobank/assets/images/favico.png'
+      APP_SYNC_UPDATE_CRYPTO_REPORT_REDIS_KEY: 'RUNNING_CRON:SYNC_UPDATE_CRYPTO_REPORT'
+      APP_SYNC_UPDATE_CRYPTO_REPORT_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_UPDATE_CRYPTO_REPORT_REDIS_REFRESH_INTERVAL: 60000
+      APP_SYNC_OPEN_REMITTANCE_CRON: '0 0 9-17 * * 1-5'
+      APP_SYNC_OPEN_REMITTANCE_REDIS_KEY: 'RUNNING_CRON:SYNC_OPEN_REMITTANCE'
+      APP_SYNC_OPEN_REMITTANCE_REDIS_LOCK_TIMEOUT: 90000
+      APP_SYNC_OPEN_REMITTANCE_REDIS_REFRESH_INTERVAL: 6000
+      APP_REMITTANCE_PSP_SETTLEMENT_DATE_BY_STARTING_TIME: '09:05_D0-D0;14:31_D1-D1'
+      APP_REMITTANCE_PSP_MARKET_OPEN_TIME: '9:05'
+      APP_REMITTANCE_PSP_MARKET_CLOSE_TIME: '16:33'
+      APP_REMITTANCE_PSP_MIN_AMOUNT: 1000000
+      APP_REMITTANCE_PSP_MAX_AMOUNT: 99999900
+      APP_REMITTANCE_PSP_MAX_DAILY_AMOUNT: 1000000000
+      APP_SYNC_STATE_EXCHANGE_QUOTATION_CRON: '*/5 * * * * *'
+      APP_SYNC_STATE_EXCHANGE_QUOTATION_REDIS_KEY: 'RUNNING_CRON:SYNC_STATE_EXCHANGE_QUOTATION'
+      APP_SYNC_STATE_EXCHANGE_QUOTATION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_STATE_EXCHANGE_QUOTATION_REDIS_REFRESH_INTERVAL: 60000
+      APP_BOT_OTC_SYSTEM_NAME: 'OTC_BOT'
+    depends_on:
+      - kafka1
+      - zro-db
+      - redis
+
+  zro-admin:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: admin
+    hostname: zro-admin
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK ADMIN MICROSERVICE'
+      APP_ENV: ${ADMIN_APP_ENV:-local}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_admin'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_admin'
+      APP_DATABASE_LOG: ${ADMIN_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'admin-microservice'
+      APP_LOG_LEVEL: ${ADMIN_APP_LOG_LEVEL:-debug}
+      APP_SEND_CODE_EMAIL_FROM: 'teste@zro.com.br'
+      APP_SEND_CODE_EMAIL_TAG: 'API_ADMIN_EMAIL_VALIDATE_CODE'
+      APP_SEND_CODE_RANDOM_NUMBER_SIZE: 6
+      APP_SEND_CODE_TOKEN_ATTEMPT: 3
+    depends_on:
+      - kafka1
+      - zro-db
+
+  zro-api-admin:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/api/Dockerfile
+      args:
+        SERVICE: api-admin
+    ports:
+      - '3003:3000'
+    hostname: zro-api-admin
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK API ADMIN'
+      APP_ENV: ${API_ADMIN_APP_ENV:-local}
+      APP_JWT_TOKEN: ${API_ADMIN_APP_JWT_TOKEN:?API_ADMIN_APP_JWT_TOKEN env var is missing on .env file}
+      APP_STORAGE_BASE_URL: 'http://zro-storage:3000'
+      APP_STORAGE_EXCHANGE_CONTRACT_FOLDERNAME: exchange-contracts
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'api-admin-microservice'
+      APP_PORT: 3000
+    depends_on:
+      - kafka1
+      - zro-admin
+      - zro-otc
+      - zro-quotations
+      - zro-banking
+      - zro-storage
+      - zro-utils
+      - zro-users
+      - zro-pix-keys
+      - zro-pix-payments
+
+  zro-storage:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: storage
+    ports:
+      - '3005:3000'
+    hostname: zro-storage
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK STORAGE MICROSERVICE'
+      APP_ENV: ${STORAGE_APP_ENV:-local}
+      APP_PORT: 3000
+      APP_LOG_LEVEL: ${STORAGE_APP_LOG_LEVEL:-debug}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_storage'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_storage'
+      APP_DATABASE_LOG: ${STORAGE_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'storage-microservice'
+      APP_MULTER_DEST: /tmp
+      APP_GATEWAY_FILE_STORAGE_DEST: files-storage
+      APP_AWS_BUCKET_NAME: 'secret'
+      APP_AWS_ACCESS_KEY_ID: 'secret'
+      APP_AWS_SECRET_ACCESS_KEY: 'secret'
+      APP_AWS_REGION_NAME: 'secret'
+    depends_on:
+      - kafka1
+      - zro-db
+
+  zro-utils:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: utils
+    hostname: zro-utils
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK UTILS MICROSERVICE'
+      APP_ENV: ${UTILS_APP_ENV:-local}
+      APP_LOG_LEVEL: ${UTILS_APP_LOG_LEVEL:-debug}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_utils'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_utils'
+      APP_DATABASE_LOG: ${UTILS_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'utils-microservice'
+      APP_RETRY_INTERVAL_MS: 100
+      APP_SYNC_USER_WITHDRAW_SETTING_DAILY_CRON: '0 0 6 * * *'
+      APP_SYNC_USER_WITHDRAW_SETTING_BALANCE_CRON: '0 * * * * *'
+      APP_SYNC_USER_WITHDRAW_SETTING_DAY_5_CRON: '0 30 6 5 * *'
+      APP_SYNC_USER_WITHDRAW_SETTING_DAY_15_CRON: '0 30 6 15 * *'
+      APP_SYNC_USER_WITHDRAW_SETTING_DAY_25_CRON: '0 30 6 25 * *'
+      APP_SYNC_USER_WITHDRAW_SETTING_MONDAY_CRON: '0 0 7 * * 1'
+      APP_SYNC_USER_WITHDRAW_SETTING_TUESDAY_CRON: '0 0 7 * * 2'
+      APP_SYNC_USER_WITHDRAW_SETTING_WEDNESDAY_CRON: '0 0 7 * * 3'
+      APP_SYNC_USER_WITHDRAW_SETTING_THURSDAY_CRON: '0 0 7 * * 4'
+      APP_SYNC_USER_WITHDRAW_SETTING_FRIDAY_CRON: '0 0 7 * * 5'
+      APP_SYNC_USER_WITHDRAW_SETTING_SATURDAY_CRON: '0 0 7 * * 6'
+      APP_SYNC_USER_WITHDRAW_SETTING_SUNDAY_CRON: '0 0 7 * * 7'
+      APP_PIX_PAYMENT_OPERATION_CURRENCY_TAG: 'REAL'
+    depends_on:
+      - kafka1
+      - zro-db
+
+  zro-signup:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: signup
+    hostname: zro-signup
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK SIGNUP MICROSERVICE'
+      APP_ENV: ${SIGNUP_APP_ENV:-local}
+      APP_LOG_LEVEL: ${SIGNUP_APP_LOG_LEVEL:-debug}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_signup'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_signup'
+      APP_DATABASE_LOG: ${SIGNUP_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'signup-microservice'
+      APP_SIGNUP_EMAIL_TAG: 'API_USERS_EMAIL_VALIDATE_CODE'
+      APP_SIGNUP_EMAIL_FROM: 'teste@zro.com.br'
+    depends_on:
+      - kafka1
+      - zro-db
+
+  zro-webhooks:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: webhooks
+    hostname: zro-webhooks
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK WEBHOOKS MICROSERVICE'
+      APP_ENV: ${WEBHOOKS_APP_ENV:-local}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_webhooks'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_webhooks'
+      APP_DATABASE_LOG: ${WEBHOOKS_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'webhooks-microservice'
+      APP_LOG_LEVEL: ${WEBHOOKS_APP_LOG_LEVEL:-debug}
+      APP_ENCRYPT_PASSWORD: ${ENCRYPT_PASSWORD:?ENCRYPT_PASSWORD env var is missing on .env file}
+      APP_RETRY_MIN_SECONDS: ${APP_RETRY_MIN_SECONDS:-10}
+      APP_RETRY_MAX_SECONDS: ${APP_RETRY_MAX_SECONDS:-3600}
+    depends_on:
+      - kafka1
+      - zro-db
+
+  zro-payments-gateway:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: payments-gateway
+    hostname: zro-payments-gateway
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK PAYMENTS GATEWAY MICROSERVICE'
+      APP_ENV: ${PAYMENTS_GATEWAY_APP_ENV:-local}
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_payments_gateway'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_payments_gateway'
+      APP_DATABASE_LOG: ${PAYMENT_GATEWAY_APP_LOG_LEVEL:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'payments-gateway-microservice'
+      APP_LOG_LEVEL: ${PAYMENTS_GATEWAY_APP_LOG_LEVEL:-debug}
+      APP_PATH: 'apps/payments-gateway'
+      APP_PAYMENTS_GATEWAY_BASE_URL: 'http://mock-payments-gateway:8088'
+      APP_PAYMENTS_GATEWAY_API_TOKEN: 'secret'
+      APP_SYNC_TRANSACTION_CRON: 0 */5 * * * *
+      APP_GET_TRANSACTION_CRON: 0 */2 * * * *
+      APP_SYNC_TRANSACTION_REDIS_KEY: RUNNING_CRON:SYNC_TRANSACTION
+      APP_SYNC_TRANSACTION_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_TRANSACTION_REDIS_REFRESH_INTERVAL: 60000
+      APP_GET_TRANSACTION_REDIS_KEY: RUNNING_CRON:GET_TRANSACTION
+      APP_GET_TRANSACTION_REDIS_LOCK_TIMEOUT: 120000
+      APP_GET_TRANSACTION_REDIS_REFRESH_INTERVAL: 60000
+      APP_TRANSACTIONS_DEFAULT_TTL_MS: 2592000000
+    depends_on:
+      - kafka1
+      - zro-db
+      - mock-payments-gateway
+      - zro-pix-payments
+
+  zro-pix-zro-pay:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: pix-zro-pay
+    hostname: zro-pix-zro-pay
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK PIX ZRO PAY MICROSERVICE'
+      APP_ENV: ${PIX_ZRO_PAY_APP_ENV:-local}
+      APP_PATH: 'apps/pix-zro-pay'
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_pix_zro_pay'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_pix_zro_pay'
+      APP_DATABASE_LOG: ${PIX_ZRO_PAY_APP_LOG_LEVEL:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'pix-zro-pay-microservice'
+      APP_REDIS_HOST: 'redis'
+      APP_REDIS_KEY_PREFIX: PIX_ZRO_PAY
+      APP_LOG_LEVEL: ${PIX_ZRO_PAY_APP_LOG_LEVEL:-debug}
+      APP_QR_CODE_EXPIRATION_IN_SECONDS: 600
+      APP_QR_CODE_DEFAULT_TTL_MS: 86400000
+      APP_ASAAS_API_TOKEN: 'secret'
+      APP_ASAAS_PIX_PAYMENT_BASE_URL: 'localhost'
+      APP_GENIAL_AUTH_BASE_URL: 'localhost'
+      APP_GENIAL_AUTH_TOKEN: 'secret'
+      APP_GENIAL_PIX_PAYMENT_BASE_URL: 'localhost'
+      APP_GENIAL_QR_CODE_ACCOUNT_HOLDER_NAME: 'test'
+      APP_GENIAL_QR_CODE_ACCOUNT_HOLDER_CITY: 'SAO PAULO'
+      APP_GENIAL_QR_CODE_CNPJ_ZRO: 'test'
+      APP_ZROBANK_API_PAAS_ID: 'localhost'
+      APP_ZROBANK_API_PAAS_KEY: 'test'
+      APP_ZROBANK_API_PAAS_BASE_URL: 'test'
+    depends_on:
+      - kafka1
+      - zro-db
+      - zro-pix-payments
+      - zro-pix-keys
+
+  zro-picpay:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: picpay
+    hostname: zro-picpay
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK PICPAY MICROSERVICE'
+      APP_ENV: ${PICPAY_APP_ENV:-local}
+      APP_PATH: 'apps/picpay'
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_BROKER_HOSTS: 'localhost:9091'
+      APP_BROKER_GROUP_ID: 'picpay-microservice'
+      APP_REDIS_HOST: localhost
+      APP_REDIS_KEY_PREFIX: PICPAY
+      APP_SYNC_PICPAY_PAYMENT_CRON: '*/30 * * * * *'
+      APP_SYNC_PICPAY_PAYMENT_REDIS_KEY: 'RUNNING_CRON:SYNC_PICPAY_PAYMENT'
+      APP_SYNC_PICPAY_PAYMENT_REDIS_LOCK_TIMEOUT: 120000
+      APP_SYNC_PICPAY_PAYMENT_REDIS_REFRESH_INTERVAL: 60000
+      APP_PICPAY_TIMEOUT: 20000
+      APP_PICPAY_MAX_REDIRECTS: 5
+      APP_PICPAY_HOST: localhost
+      APP_PICPAY_CALLBACK_URL: localhost
+      APP_PICPAY_RETURN_URL: localhost
+      APP_PICPAY_CHANNEL: 'Zro Bank'
+      APP_PICPAY_PURCHASE_MODE: 'in-store'
+      APP_PICPAY_SOFT_DESCRIPTOR: 'Zro Bank'
+      APP_PICPAY_TOKEN: 'secrete'
+    depends_on:
+      - kafka1
+      - zro-db
+
+  zro-cielo:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: cielo
+    hostname: zro-cielo
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK CIELO MICROSERVICE'
+      APP_ENV: ${CIELO_APP_ENV:-local}
+      APP_PATH: 'apps/cielo'
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+    depends_on:
+      - kafka1
+      - zro-db
+
+  zro-api-jdpi:
+    profiles:
+      - local
+    build:
+      context: .
+      dockerfile: ./deploy/service/Dockerfile
+      args:
+        SERVICE: api-jdpi
+    ports:
+      - '3012:3000'
+    hostname: zro-api-jdpi
+    restart: unless-stopped
+    environment:
+      APP_NAME: 'ZROBANK API JDPI MICROSERVICE'
+      APP_ENV: ${API_JDPI_APP_ENV:-local}
+      APP_PATH: 'apps/api-jdpi'
+      APP_PORT: 3000
+      APP_TRANSLATE_PATH: 'apps/api-jdpi/assets/i18n'
+      APP_DATABASE_HOST: 'zro-db'
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_SCHEMA: public
+      APP_DATABASE_DATABASE: ${POSTGRES_DB:?POSTGRES_DB env var is missing on .env file}
+      APP_DATABASE_USERNAME: ${POSTGRES_USER:?POSTGRES_USER env var is missing on .env file}
+      APP_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD env var is missing on .env file}
+      APP_DATABASE_SSL: 'false'
+      APP_DATABASE_MIGRATION_TABLE: 'sequelize_meta_api_jdpi'
+      APP_DATABASE_SEEDERS_TABLE: 'sequelize_seeders_api_jdpi'
+      APP_DATABASE_LOG: ${API_JDPI_APP_DATABASE_LOG:-true}
+      APP_BROKER_HOSTS: 'kafka1:19091'
+      APP_BROKER_GROUP_ID: 'api-jdpi-microservice'
+      APP_LOG_LEVEL: ${API_JDPI_APP_DATABASE_LOG_LEVEL:-debug}
+      APP_JWT_TOKEN: ${API_JDPI_APP_JWT_TOKEN:?API_JDPI_APP_JWT_TOKEN env var is missing on .env file}
+      APP_JDPI_AUTH_CLIENT_ID: ${JDPI_AUTH_CLIENT_ID}
+      APP_JDPI_AUTH_CLIENT_SECRET: ${JDPI_AUTH_CLIENT_SECRET}
+      APP_REDIS_HOST: 'redis'
+      APP_REDIS_KEY_PREFIX: API_JDPI
+      APP_CLIENT_ID: 1234
+      APP_CLIENT_SECRET: 1234
+      APP_ZROBANK_ISPB: '26264220'
+    depends_on:
+      - kafka1
+      - zro-db
+      - zro-operations
+      - zro-users
+      - zro-pix-payments

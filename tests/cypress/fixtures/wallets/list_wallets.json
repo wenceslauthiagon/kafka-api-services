@@ -1,0 +1,122 @@
+[
+  {
+    "id": "c736203b-d8ab-4b52-b212-353cd7bd7ddb",
+    "name": " create testing - ZBDHT",
+    "default": false,
+    "state": "active",
+    "permission_types": [
+      "ROOT"
+    ],
+    "owner_id": "b28163ec-3d28-4786-a154-7a28ab3600a6",
+    "owner_name": "Zro Bolsão",
+    "created_at": "2023-07-23T11:53:26.044Z"
+  },
+  {
+    "id": "6040957a-59f2-4634-91fe-98de99071534",
+    "name": " create testing - YISHH",
+    "default": false,
+    "state": "active",
+    "permission_types": [
+      "ROOT"
+    ],
+    "owner_id": "b28163ec-3d28-4786-a154-7a28ab3600a6",
+    "owner_name": "Zro Bolsão",
+    "created_at": "2023-07-25T18:12:21.683Z"
+  },
+  {
+    "id": "4b64c1d2-29be-428a-8e5c-5354cb56c6d1",
+    "name": " create testing - BSQQH",
+    "default": false,
+    "state": "active",
+    "permission_types": [
+      "ROOT"
+    ],
+    "owner_id": "b28163ec-3d28-4786-a154-7a28ab3600a6",
+    "owner_name": "Zro Bolsão",
+    "created_at": "2023-07-28T21:33:17.628Z"
+  },
+  {
+    "id": "5addc518-fd88-4aca-a610-20610699ac31",
+    "name": " create testing - ALNHA",
+    "default": false,
+    "state": "active",
+    "permission_types": [
+      "ROOT"
+    ],
+    "owner_id": "b28163ec-3d28-4786-a154-7a28ab3600a6",
+    "owner_name": "Zro Bolsão",
+    "created_at": "2023-07-28T21:34:18.264Z"
+  },
+  {
+    "id": "941685ab-fd94-4387-8e24-8eb77b9dcdf2",
+    "name": "DEFAULT",
+    "default": true,
+    "state": "active",
+    "permission_types": [
+      "ROOT"
+    ],
+    "owner_id": "b28163ec-3d28-4786-a154-7a28ab3600a6",
+    "owner_name": "Zro Bolsão",
+    "created_at": "2022-03-29T14:07:10.045Z"
+  },
+  {
+    "id": "474a72bc-dbb5-4ef1-acd5-6dd89aa480ba",
+    "name": "Wallet 4",
+    "default": false,
+    "state": "active",
+    "permission_types": [
+      "ROOT"
+    ],
+    "owner_id": "b28163ec-3d28-4786-a154-7a28ab3600a6",
+    "owner_name": "Zro Bolsão",
+    "created_at": "2022-01-27T14:07:10.045Z"
+  },
+  {
+    "id": "195d0e87-08f9-4356-ab54-2405bb8c18c0",
+    "name": "Wallet 3",
+    "default": false,
+    "state": "active",
+    "permission_types": [
+      "ROOT"
+    ],
+    "owner_id": "b28163ec-3d28-4786-a154-7a28ab3600a6",
+    "owner_name": "Zro Bolsão",
+    "created_at": "2022-01-27T14:07:10.045Z"
+  },
+  {
+    "id": "8676b385-1c69-4265-abeb-66a512209844",
+    "name": " create testing - PEKVQ",
+    "default": false,
+    "state": "active",
+    "permission_types": [
+      "ROOT"
+    ],
+    "owner_id": "b28163ec-3d28-4786-a154-7a28ab3600a6",
+    "owner_name": "Zro Bolsão",
+    "created_at": "2023-07-23T12:28:00.755Z"
+  },
+  {
+    "id": "c1bda1f2-6ae8-49e3-96be-ee61d2eec477",
+    "name": " create testing - FWDNP",
+    "default": false,
+    "state": "active",
+    "permission_types": [
+      "ROOT"
+    ],
+    "owner_id": "b28163ec-3d28-4786-a154-7a28ab3600a6",
+    "owner_name": "Zro Bolsão",
+    "created_at": "2023-07-23T13:05:36.059Z"
+  },
+  {
+    "id": "7597e293-1ed8-4c3e-8474-f49757fd2a93",
+    "name": " create testing - EQXWK",
+    "default": false,
+    "state": "active",
+    "permission_types": [
+      "ROOT"
+    ],
+    "owner_id": "b28163ec-3d28-4786-a154-7a28ab3600a6",
+    "owner_name": "Zro Bolsão",
+    "created_at": "2023-07-26T16:30:41.371Z"
+  }
+]

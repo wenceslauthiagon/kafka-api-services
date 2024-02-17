@@ -1,0 +1,10 @@
+{
+  "USER_LIMIT_REQUEST_CLOSED_CONFIRMED_APPROVED_TITLE": "Uhuu! Aumento de limite aprovado.",
+  "USER_LIMIT_REQUEST_CLOSED_CONFIRMED_APPROVED_MESSAGE": "O seu pedido de aumento de limite para a operação solicitada foi APROVADO e já está disponível. Se precisar fazer qualquer outra solicitação, é só entrar em contato novamente, tá bem?",
+  "USER_LIMIT_REQUEST_CLOSED_CONFIRMED_REJECTED_TITLE": "Ops! Aumento de limite reprovado.",
+  "USER_LIMIT_REQUEST_CLOSED_CONFIRMED_REJECTED_MESSAGE": "Infelizmente, não conseguimos aprovar o seu pedido de aumento de limite, depois de uma análise detalhada dos nossos especialistas. Se precisar de ajuda, é só entrar em contato novamente, combinado?",
+  "USER_WITHDRAW_SETTING_REQUEST_APPROVED_TITLE": "Uhuu! Solicitação de saque automático aprovado.",
+  "USER_WITHDRAW_SETTING_REQUEST_APPROVED_MESSAGE": "O seu pedido de solicitação de saque automático para a operação solicitada foi APROVADO e já está disponível. Se precisar fazer qualquer outra solicitação, é só entrar em contato novamente, tá bem?",
+  "USER_WITHDRAW_SETTING_REQUEST_REJECTED_TITLE": "Ops! Solicitação de saque automático reprovado.",
+  "USER_WITHDRAW_SETTING_REQUEST_REJECTED_MESSAGE": "Infelizmente, não conseguimos aprovar o seu pedido de saque automático, depois de uma análise detalhada dos nossos especialistas. Se precisar de ajuda, é só entrar em contato novamente, combinado?"
+}

@@ -1,0 +1,162 @@
+[
+  {
+    "id": "360feb3f-6b67-45d2-a4e8-3d9ac41cd23a",
+    "code": "062",
+    "ispb": "03012230",
+    "name": "HIPERCARD BM S.A.",
+    "full_name": "Hipercard Banco Múltiplo S.A.",
+    "created_at": "2022-10-27T18:27:43.642Z"
+  },
+  {
+    "id": "6dde5ed6-f95b-46fd-a9ca-ac1092d4a229",
+    "code": "529",
+    "ispb": "17079937",
+    "name": "PINBANK IP",
+    "full_name": "PINBANK BRASIL INSTITUIÇÃO DE PAGAMENTO S.A.",
+    "created_at": "2022-11-16T13:32:49.108Z"
+  },
+  {
+    "id": "1347f157-ca1c-4295-b607-e72a38de2cb3",
+    "code": "191",
+    "ispb": "04257795",
+    "name": "NOVA FUTURA CTVM LTDA.",
+    "full_name": "Nova Futura Corretora de Títulos e Valores Mobiliários Ltda.",
+    "created_at": "2022-10-27T18:27:43.648Z"
+  },
+  {
+    "id": "e0da7297-a993-4d15-b5c3-b999125ca40f",
+    "code": "741",
+    "ispb": "00517645",
+    "name": "BCO RIBEIRAO PRETO S.A.",
+    "full_name": "BANCO RIBEIRAO PRETO S.A.",
+    "created_at": "2022-10-27T18:27:43.631Z"
+  },
+  {
+    "id": "d5f246d1-f24a-4763-8cb7-87193a36c500",
+    "code": "739",
+    "ispb": "00558456",
+    "name": "BCO CETELEM S.A.",
+    "full_name": "Banco Cetelem S.A.",
+    "created_at": "2022-10-27T18:27:43.632Z"
+  },
+  {
+    "id": "01d13fa6-a4db-43bc-8e3c-60d2ce6463af",
+    "code": "097",
+    "ispb": "04632856",
+    "name": "CREDISIS CENTRAL DE COOPERATIVAS DE CRÉDITO LTDA.",
+    "full_name": "Credisis - Central de Cooperativas de Crédito Ltda.",
+    "created_at": "2022-10-27T18:27:43.649Z"
+  },
+  {
+    "id": "58310643-70a8-4123-a18e-b71faa4d849b",
+    "code": "099",
+    "ispb": "03046391",
+    "name": "UNIPRIME COOPCENTRAL LTDA.",
+    "full_name": "UNIPRIME CENTRAL NACIONAL - CENTRAL NACIONAL DE COOPERATIVA DE CREDITO",
+    "created_at": "2022-10-27T18:27:43.643Z"
+  },
+  {
+    "id": "1dafaeff-2234-4a18-97fc-fc9ad25fa9dd",
+    "code": "025",
+    "ispb": "03323840",
+    "name": "BCO ALFA S.A.",
+    "full_name": "Banco Alfa S.A.",
+    "created_at": "2022-10-27T18:27:43.644Z"
+  },
+  {
+    "id": "bf7ad905-4537-4b93-a48a-b84c50ece715",
+    "code": "362",
+    "ispb": "01027058",
+    "name": "CIELO IP S.A.",
+    "full_name": "CIELO S.A. - INSTITUIÇÃO DE PAGAMENTO",
+    "created_at": "2022-10-27T18:27:43.634Z"
+  },
+  {
+    "id": "3d6a117b-ce55-445c-bbc2-d55c630a0814",
+    "code": "419",
+    "ispb": "38129006",
+    "name": "NUMBRS SCD S.A.",
+    "full_name": "NUMBRS SOCIEDADE DE CRÉDITO DIRETO S.A.",
+    "created_at": "2022-10-27T18:27:43.710Z"
+  },
+  {
+    "id": "44421b34-3217-429c-b83b-fcae7d6412fa",
+    "code": "401",
+    "ispb": "15111975",
+    "name": "IUGU IP S.A.",
+    "full_name": "IUGU INSTITUIÇÃO DE PAGAMENTO S.A.",
+    "created_at": "2022-10-27T18:27:43.679Z"
+  },
+  {
+    "id": "4886578e-32c5-4bb5-8dea-13242c58eced",
+    "code": "418",
+    "ispb": "37414009",
+    "name": "ZIPDIN SCD S.A.",
+    "full_name": "ZIPDIN SOLUÇÕES DIGITAIS SOCIEDADE DE CRÉDITO DIRETO S/A",
+    "created_at": "2022-10-27T18:27:43.709Z"
+  },
+  {
+    "id": "1c563e00-3454-4d87-8e44-f7ddde7db6aa",
+    "code": "653",
+    "ispb": "61024352",
+    "name": "BANCO VOITER",
+    "full_name": "BANCO VOITER S.A.",
+    "created_at": "2022-10-27T18:27:43.727Z"
+  },
+  {
+    "id": "4ac3c8be-2a6f-40d9-a8be-fb5cf50ac9b8",
+    "code": "525",
+    "ispb": "34265629",
+    "name": "INTERCAM CC LTDA",
+    "full_name": "INTERCAM CORRETORA DE CÂMBIO LTDA.",
+    "created_at": "2022-12-22T15:06:35.678Z"
+  },
+  {
+    "id": "ab282540-24c5-4780-b2ce-f303a0c3688b",
+    "code": "513",
+    "ispb": "44728700",
+    "name": "ATF CREDIT SCD S.A.",
+    "full_name": "ATF CREDIT SOCIEDADE DE CRÉDITO DIRETO S.A.",
+    "created_at": "2022-12-22T15:06:35.692Z"
+  },
+  {
+    "id": "ff8b7bee-8d07-44c0-8017-13464451f9a2",
+    "code": "536",
+    "ispb": "20855875",
+    "name": "NEON PAGAMENTOS S.A. IP",
+    "full_name": "NEON PAGAMENTOS S.A. - INSTITUIÇÃO DE PAGAMENTO",
+    "created_at": "2023-01-08T03:10:00.572Z"
+  },
+  {
+    "id": "7d161992-da3d-4791-b3b6-0be479ecee2d",
+    "code": "526",
+    "ispb": "46026562",
+    "name": "MONETARIE SCD",
+    "full_name": "MONETARIE SOCIEDADE DE CRÉDITO DIRETO S.A.",
+    "created_at": "2023-01-16T14:01:20.867Z"
+  },
+  {
+    "id": "d6b27869-437f-4712-b718-e6b676f54491",
+    "code": "509",
+    "ispb": "13935893",
+    "name": "CELCOIN IP S.A.",
+    "full_name": "CELCOIN INSTITUICAO DE PAGAMENTO S.A.",
+    "created_at": "2023-01-20T17:29:43.199Z"
+  },
+  {
+    "id": "eb13b98c-9a55-4ffe-a410-3ca918da5089",
+    "code": "521",
+    "ispb": "44019481",
+    "name": "PEAK SEP S.A.",
+    "full_name": "PEAK SOCIEDADE DE EMPRÉSTIMO ENTRE PESSOAS S.A.",
+    "created_at": "2023-01-23T17:45:02.936Z"
+  },
+  {
+    "id": "dcab5eb5-5217-474b-9b8d-a66853b4c2a1",
+    "code": "518",
+    "ispb": "37679449",
+    "name": "MERCADO CRÉDITO SCFI S.A.",
+    "full_name": "MERCADO CRÉDITO SOCIEDADE DE CRÉDITO, FINANCIAMENTO E INVESTIMENTO S.A.",
+    "created_at": "2023-01-27T20:07:02.872Z"
+  }
+]

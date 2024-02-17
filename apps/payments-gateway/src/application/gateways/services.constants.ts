@@ -1,0 +1,18 @@
+export const PAYMENTS_GATEWAY_SERVICES = {
+  DEPOSIT: '/api/transactions/deposit',
+  DEVOLUTION: '/api/transactions/returns',
+  COMPANY: '/api/my-company',
+  REFUND: '/api/transactions/refunds',
+  ORDER: '/api/orders',
+  ORDER_REFUNDS: '/api/orders/refunds',
+  WITHDRAWAL: '/api/transactions/withdraws',
+  WALLETS: '/api/wallets/check',
+  TRANSACTION: '/api/get-transactions-data',
+  DASHBOARD: '/api/dashboards',
+  EXPORT: '/api/transactions/exports',
+  SUPPORTS_REFUND_RECEIPTS: '/api/supports/refund-receipts/bank-accounts',
+  SUPPORTS_WITHDRAW_RECEIPTS: '/api/supports/withdraw-receipts/bank-accounts',
+  VALIDATION_KYC: '/api/kyc/count',
+  VALIDATION_ADMIN_KYC: '/api/admin/kyc/count',
+  VALIDATION_CLIENT_KYC: '/api/client/kyc/count',
+};

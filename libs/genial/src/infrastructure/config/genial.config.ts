@@ -1,0 +1,9 @@
+export interface GenialGatewayConfig {
+  APP_ENV: string;
+  APP_GENIAL_AUTH_BASE_URL: string;
+  APP_GENIAL_AUTH_TOKEN: string;
+  APP_GENIAL_PIX_PAYMENT_BASE_URL: string;
+  APP_GENIAL_QR_CODE_ACCOUNT_HOLDER_NAME: string;
+  APP_GENIAL_QR_CODE_ACCOUNT_HOLDER_CITY: string;
+  APP_GENIAL_QR_CODE_CNPJ_ZRO: string;
+}

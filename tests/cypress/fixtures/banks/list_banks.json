@@ -1,0 +1,282 @@
+[
+  {
+    "id": "8e322833-4f47-4d8d-b08e-bd90599e78a9",
+    "ispb": "68900810",
+    "name": "BCO RENDIMENTO S.A.",
+    "full_name": "BANCO RENDIMENTO S.A.",
+    "created_at": "2022-01-28T21:04:01.457Z"
+  },
+  {
+    "id": "bcf33cea-f340-4b8b-9c90-bf01a8aa7869",
+    "ispb": "02038232",
+    "name": "BANCO SICOOB S.A.",
+    "full_name": "BANCO COOPERATIVO SICOOB S.A. - BANCO SICOOB",
+    "created_at": "2022-01-28T21:04:01.385Z"
+  },
+  {
+    "id": "de54ea65-3637-4c54-b461-5bc13091604f",
+    "ispb": "01858774",
+    "name": "BCO BV S.A.",
+    "full_name": "BANCO BV S.A.",
+    "created_at": "2022-01-28T21:04:01.385Z"
+  },
+  {
+    "id": "48d3964a-e64a-49aa-9575-2f005fa03b24",
+    "ispb": "30723886",
+    "name": "BCO MODAL S.A.",
+    "full_name": "BANCO MODAL S.A.",
+    "created_at": "2022-01-28T21:04:01.433Z"
+  },
+  {
+    "id": "c5ea58f0-ed88-4ee4-840b-0c983b2fcb10",
+    "ispb": "02923389",
+    "name": "COOP SICREDI ARACAJU",
+    "full_name": "COOPERATIVA DE CRÉDITO, POUPANÇA E INVESTIMENTO SICREDI ARACAJU - SICREDI ARACAJU",
+    "created_at": "2022-05-21T00:58:24.751Z"
+  },
+  {
+    "id": "11c7b7a4-8d89-40d6-b063-449792b4cc54",
+    "ispb": "40473435",
+    "name": "REPASSES FINANCEIROS",
+    "full_name": "REPASSES FINANCEIROS E SOLUCOES TECNOLOGICAS INSTITUICAO DE PAGAMENTO S.A.",
+    "created_at": "2022-12-16T14:54:19.401Z"
+  },
+  {
+    "id": "6603a277-920b-4564-a00c-226c534aab01",
+    "ispb": "09437293",
+    "name": "BRINKS PAY IP LTDA.",
+    "full_name": "BRINKS PAY INSTITUICAO DE PAGAMENTO LTDA",
+    "created_at": "2023-01-17T15:46:19.744Z"
+  },
+  {
+    "id": "496b4b2a-ec0e-4d44-a685-0a158122edba",
+    "ispb": "38129006",
+    "name": "NUMBRS SCD S.A.",
+    "full_name": "NUMBRS SOCIEDADE DE CRÉDITO DIRETO S.A.",
+    "created_at": "2022-01-28T21:04:01.442Z"
+  },
+  {
+    "id": "93d91bb4-21ec-48ae-b911-6de4ba9c593b",
+    "ispb": "37511258",
+    "name": "INOVANTI",
+    "full_name": "INOVANTI INSTITUICAO DE PAGAMENTOS S.A.",
+    "created_at": "2022-12-27T20:51:57.342Z"
+  },
+  {
+    "id": "32e45a26-e7bd-4f87-9e05-3ef66047e5ef",
+    "ispb": "01896779",
+    "name": "CSU",
+    "full_name": "CSU CARDSYSTEM S/A",
+    "created_at": "2023-01-27T20:07:04.240Z"
+  },
+  {
+    "id": "e5c68492-707e-4bf2-b67c-944445a2a7d5",
+    "ispb": "28220872",
+    "name": "VALEPAY",
+    "full_name": "VALEPAY BRASIL LTDA",
+    "created_at": "2022-12-07T13:54:40.303Z"
+  },
+  {
+    "id": "dbb039a0-7444-43f5-b133-1da8afb405b8",
+    "ispb": "33172537",
+    "name": "BCO J.P. MORGAN S.A.",
+    "full_name": "BANCO J.P. MORGAN S.A.",
+    "created_at": "2022-01-28T21:04:01.436Z"
+  },
+  {
+    "id": "8c8c27c2-6a1c-4ad3-b94b-33f0a00d7f2f",
+    "ispb": "40654622",
+    "name": "TRINUS SCD S.A.",
+    "full_name": "TRINUS SOCIEDADE DE CRÉDITO DIRETO S.A.",
+    "created_at": "2022-01-28T21:04:01.445Z"
+  },
+  {
+    "id": "12a93fa0-4cd4-4957-80a4-62bead56aefe",
+    "ispb": "45756448",
+    "name": "MICROCASH SCMEPP LTDA.",
+    "full_name": "MICROCASH SOCIEDADE DE CRÉDITO AO MICROEMPREENDEDOR E À EMPRESA DE PEQUENO PORTE LTDA.",
+    "created_at": "2023-03-23T12:56:47.468Z"
+  },
+  {
+    "id": "fe50ad70-c905-4053-b3a9-aa008f074efe",
+    "ispb": "02031139",
+    "name": "CCLA MONTES CLAROS",
+    "full_name": "SICOOB CREDIMONTES - COOPERATIVA DE CRÉDITO DE LIVRE ADMISSÃO REGIONAL DE MONTES CLAROS LTDA",
+    "created_at": "2022-05-21T00:58:24.735Z"
+  },
+  {
+    "id": "ed69ac45-a2f9-4ac4-b081-6f77e87fa81d",
+    "ispb": "23273917",
+    "name": "VALLOO PAGAMENTOS",
+    "full_name": "VALLOO S.A. INSTITUICAO DE PAGAMENTO",
+    "created_at": "2022-09-23T03:31:21.626Z"
+  },
+  {
+    "id": "a62a434f-9201-44f4-9e56-1cc96fe23794",
+    "ispb": "00068987",
+    "name": "CC ARACREDI LTDA.",
+    "full_name": "COOPERATIVA DE CRÉDITO ARACREDI LTDA. - SICOOB ARACREDI",
+    "created_at": "2022-05-21T00:58:24.699Z"
+  },
+  {
+    "id": "dc812b40-2037-4446-bfae-2d444a2e3030",
+    "ispb": "86564051",
+    "name": "CC NOROESTE DE MINAS",
+    "full_name": "COOPERATIVA DE CRéDITO NOROESTE DE MINAS LTDA. - SICOOB NOROESTE DE MINAS",
+    "created_at": "2022-05-21T00:58:24.882Z"
+  },
+  {
+    "id": "893153a4-0c26-423a-a398-e3c3dbaf996b",
+    "ispb": "32246162",
+    "name": "ALIPAY",
+    "full_name": "ALIPAY BRASIL MEIOS DE PAGAMENTO LTDA.",
+    "created_at": "2022-12-08T09:10:02.187Z"
+  },
+  {
+    "id": "188e6441-c185-404e-bb23-4fdaab8bc1c5",
+    "ispb": "33053580",
+    "name": "ECOMOVI",
+    "full_name": "ECOMOVI SOLUCOES E SERVICOS EM PAGAMENTOS LTDA",
+    "created_at": "2023-02-14T13:34:14.225Z"
+  },
+  {
+    "id": "045ea8df-746d-4547-8001-6d544338eb3d",
+    "ispb": "40083667",
+    "name": "CAPITAL CONSIG SCD S.A.",
+    "full_name": "CAPITAL CONSIG SOCIEDADE DE CRÉDITO DIRETO S.A.",
+    "created_at": "2022-01-28T21:04:01.445Z"
+  },
+  {
+    "id": "fb449bd0-b22e-4594-92b9-39ebf3420f7f",
+    "ispb": "81723108",
+    "name": "CREDICOAMO",
+    "full_name": "CREDICOAMO CREDITO RURAL COOPERATIVA",
+    "created_at": "2022-01-28T21:04:01.460Z"
+  },
+  {
+    "id": "822e6265-9e79-4891-9712-c2eb4cf8a397",
+    "ispb": "29759316",
+    "name": "SERVNET IP LTDA.",
+    "full_name": "SERVNET INSTITUIÇÃO DE PAGAMENTO LTDA.",
+    "created_at": "2022-09-23T03:31:21.627Z"
+  },
+  {
+    "id": "64000e17-8f96-46b2-bf3f-95b0537d8595",
+    "ispb": "14796606",
+    "name": "ADYEN LATIN AMERICA",
+    "full_name": "ADYEN DO BRASIL INSTITUICAO DE PAGAMENTO LTDA.",
+    "created_at": "2022-08-13T00:00:34.005Z"
+  },
+  {
+    "id": "e07eda89-fa72-4b88-9a3b-3c73cd02fce6",
+    "ispb": "01657678",
+    "name": "CCLA SEBASTIAO PARAISO",
+    "full_name": "COOPERATIVA DE CRÉDITO DE LIVRE ADMISSÃO DA REGIÃO DE SÃO SEBASTIÃO DO PARAÍSO LTDA. - SICOOB PARAÍSOCRED",
+    "created_at": "2022-05-21T00:58:24.725Z"
+  },
+  {
+    "id": "8a80e1eb-c5f2-475f-98a2-8beb14ae5fd3",
+    "ispb": "00604122",
+    "name": "TRIVALE",
+    "full_name": "TRIVALE INSTITUIÇÃO DE PAGAMENTO LTDA",
+    "created_at": "2022-05-21T00:58:24.706Z"
+  },
+  {
+    "id": "987b53f2-e9df-4dcd-80e0-e935929d4c5a",
+    "ispb": "31818873",
+    "name": "QESH IP LTDA.",
+    "full_name": "QESH INSTITUICAO DE PAGAMENTO LTDA",
+    "created_at": "2023-01-17T15:46:19.746Z"
+  },
+  {
+    "id": "e795eebc-fdd1-4653-bf9e-7f46a77e35c8",
+    "ispb": "04862600",
+    "name": "PORTOSEG S.A. CFI",
+    "full_name": "PORTOSEG S.A. - CREDITO, FINANCIAMENTO E INVESTIMENTO",
+    "created_at": "2022-02-12T17:04:01.598Z"
+  },
+  {
+    "id": "35583e96-1fb5-4649-9173-6cf8a83d4996",
+    "ispb": "02318507",
+    "name": "BCO KEB HANA DO BRASIL S.A.",
+    "full_name": "BANCO KEB HANA DO BRASIL S.A.",
+    "created_at": "2022-01-28T21:04:01.385Z"
+  },
+  {
+    "id": "396392c2-602b-49af-9883-1758b93acc91",
+    "ispb": "31872495",
+    "name": "BCO C6 S.A.",
+    "full_name": "BANCO C6 S.A.",
+    "created_at": "2022-01-28T21:04:01.433Z"
+  },
+  {
+    "id": "0aef90c3-6f86-4a53-9e3f-7483b0d45532",
+    "ispb": "00000000",
+    "name": "BCO DO BRASIL S.A.",
+    "full_name": "BANCO DO BRASIL S.A.",
+    "created_at": "2022-12-08T13:09:02.151Z"
+  },
+  {
+    "id": "3b2dc289-c504-4e14-88d6-70024d07c8c5",
+    "ispb": "09552111",
+    "name": "CC JUST GOIAS E CELG",
+    "full_name": "COOPERATIVA DE CRÉDITO DOS MAGISTRADOS, SERVIDORES DA JUSTIÇA DO ESTADO DE GOIÁS E EMPREGADOS DA CELG LTDA.",
+    "created_at": "2022-05-21T00:58:24.801Z"
+  },
+  {
+    "id": "73bdc413-2850-41f1-bfd2-37327ba89858",
+    "ispb": "07320890",
+    "name": "COOP CRESOL VALE",
+    "full_name": "COOPERATIVA DE CRÉDITO E ECONOMIA COM INTERAÇÃO SOLIDÁRIA CRESOL VALE",
+    "created_at": "2022-05-21T00:58:24.791Z"
+  },
+  {
+    "id": "a4b81fba-cc04-4780-b4bf-64771394d167",
+    "ispb": "44373041",
+    "name": "CCR CREDICANA",
+    "full_name": "COOPERATIVA DE CRÉDITO RURAL - CREDICANA",
+    "created_at": "2022-11-04T02:50:00.427Z"
+  },
+  {
+    "id": "d46762cc-aa55-42fa-9cd8-374e06cfc1b9",
+    "ispb": "61024352",
+    "name": "BANCO VOITER",
+    "full_name": "BANCO VOITER S.A.",
+    "created_at": "2022-01-28T21:04:01.453Z"
+  },
+  {
+    "id": "f8410f38-acfb-4397-adab-c027ac56728c",
+    "ispb": "32402502",
+    "name": "QI SCD S.A.",
+    "full_name": "QI SOCIEDADE DE CRÉDITO DIRETO S.A.",
+    "created_at": "2022-01-28T21:04:01.435Z"
+  },
+  {
+    "id": "c99cdba9-d30f-4e9d-89e9-ff59251785df",
+    "ispb": "02931668",
+    "name": "SICOOB FLUMINENSE",
+    "full_name": "COOPERATIVA DE CRÉDITO DE LIVRE ADMISSÃO DO ESTADO DO RIO DE JANEIRO - SICOOB FLUMINENSE",
+    "created_at": "2022-05-21T00:58:24.753Z"
+  },
+  {
+    "id": "742bf834-b3be-42b2-a373-5b82175d78ee",
+    "ispb": "02309070",
+    "name": "CCLA CREDISIS JICRED",
+    "full_name": "CREDISIS JICRED - COOPERATIVA DE CRÉDITO DE LIVRE ADMISSÃO JICRED",
+    "created_at": "2022-05-21T00:58:24.742Z"
+  },
+  {
+    "id": "fe8bf96a-80ec-4339-9171-875e9c48bc65",
+    "ispb": "02935307",
+    "name": "CC SICOOB CREDSEGURO LTDA.",
+    "full_name": "COOPERATIVA DE CRéDITO SICOOB CREDSEGURO LTDA.",
+    "created_at": "2022-05-21T00:58:24.754Z"
+  },
+  {
+    "id": "0ac741e9-2dd7-4105-a4ae-bcaefd069c88",
+    "ispb": "07679404",
+    "name": "BANCO TOPÁZIO S.A.",
+    "full_name": "BANCO TOPÁZIO S.A.",
+    "created_at": "2022-01-28T21:04:01.401Z"
+  }
+]

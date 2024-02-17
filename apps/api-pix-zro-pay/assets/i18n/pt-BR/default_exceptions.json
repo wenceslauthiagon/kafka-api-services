@@ -1,0 +1,23 @@
+{
+  "DEFAULT": "Não foi possível processar o seu pedido. Por favor tente novamente.",
+  "FORBIDDEN": "Acesso negado.",
+  "UNAUTHORIZED": "Acesso negado.",
+  "MISSING_DATA": "Dados obrigatórios necessários: {}.",
+  "USER_NOT_FOUND": "Usuário não encontrado.",
+  "INVALID_FORMAT": {
+    "one": "Verifique o formato dos dados {invalidList} e tente novamente.",
+    "other": "Verifique o formato dos dados {invalidList} e tente novamente."
+  },
+  "BANK_ACCOUNT_NOT_FOUND": "Conta bancária não encontrada.",
+  "COMPANY_NOT_FOUND": "Empresa não encontrada.",
+  "PLAN_NOT_FOUND": "Plano não encontrado.",
+  "QR_CODE_INVALID_VALUE": "Valor não permitido para geração de QrCode.",
+  "CLIENT_IS_BLACKLISTED": "Cliente não permitido.",
+  "COMPANY_POLICY_NOT_FOUND": "Política da empresa não encontrada.",
+  "COMPANY_WITHOUT_ACTIVE_BANK_CASH_IN": "Empresa não contém conta válida para CashIn.",
+  "COMPANY_WITHOUT_ACTIVE_BANK_CASH_OUT": "Empresa não contém conta válida para CashOut.",
+  "BANK_ACCOUNT_GATEWAY_NOT_FOUND": "Gateway não encontrado.",
+  "QR_CODE_NOT_GENERATED": "Erro ao gerar QrCode. Por favor tente novamente.",
+  "FILE_NOT_STORAGE": "Não foi possível realizar o upload do arquivo.",
+  "STORAGE_OFFLINE": "Não foi possível completar esta requisição."
+}

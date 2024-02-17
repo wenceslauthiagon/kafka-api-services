@@ -1,0 +1,15 @@
+{
+  "name": "b2c2-websocket",
+  "version": "1.0.0",
+  "description": "b2c2 websocket server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ws": "^8.8.1"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "infractionId": "bdb98227-3e02-4fa2-8e71-bfb8e4b4310a",
+  "operationTransactionId": "bdb98227-3e02-4fa2-8e71-bfb8e4b4310a",
+  "infractionType": "FRAUD",
+  "reportedBy": "DEBITED_PARTICIPANT",
+  "status": "OPEN",
+  "debitedParticipant": "12312312",
+  "creditedParticipant": "31231231",
+  "reportDetails": ""
+}

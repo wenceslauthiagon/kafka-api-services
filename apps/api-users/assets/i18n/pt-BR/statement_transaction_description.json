@@ -1,0 +1,18 @@
+{
+  "PAYMENT_SCHEDULED": "Pix Agendado",
+  "PAYMENT_FAILED":  "Pix Falhou",
+  "PAYMENT_CONFIRMED": "Pix Enviado",
+  "PAYMENT_CANCELED": "Pix Cancelado",
+  "PAYMENT_ERROR":  "Pix Falhou",
+  "DEPOSIT_RECEIVED": "Pix Recebido",
+  "DEPOSIT_ERROR":  "Pix Falhou",
+  "DEVOLUTION_CONFIRMED": "Pix Devolvido",
+  "DEVOLUTION_FAILED": "Pix Falhou",
+  "DEVOLUTION_ERROR":  "Pix Falhou",
+  "DEVOLUTION_RECEIVED_CONFIRMED": "Pix Recebido",
+  "DEVOLUTION_RECEIVED_ERROR":  "Pix Falhou",
+  "PAYMENT_CHANGE_CONFIRMED": "Pix Troco",
+  "PAYMENT_CHANGE_FAILED": "Pix Falhou",
+  "PAYMENT_WITHDRAWAL_CONFIRMED": "Pix Saque",
+  "PAYMENT_WITHDRAWAL_FAILED": "Pix Falhou"
+}

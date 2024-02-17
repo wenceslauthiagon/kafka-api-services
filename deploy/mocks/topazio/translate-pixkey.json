@@ -1,0 +1,21 @@
+{
+  "dictAccountId": 12345,
+  "cidId": "891812uuwuw98838e8e8e8e8e8",
+  "requestId": "bdb98227-3e02-4fa2-8e71-bfb8e4b4310a",
+  "keyType": "EVP",
+  "accountType": "CACC",
+  "personType": "NATURAL_PERSON",
+  "key": "bdb98227-3e02-4fa2-8e71-bfb8e4b4310a",
+  "branch": "1234",
+  "accountNumber": "123456789",
+  "ispb": "11111111",
+  "document": "12345678901",
+  "name": "PAULO AUGUSTO",
+  "tradeName": null,
+  "activeAccount": true,
+  "accountOpeningDate": "2022-02-18T14:05:05.960Z",
+  "keyCreationDate": "2022-02-18T14:05:05.960Z",
+  "keyOwnershipDate": "2022-02-18T14:05:05.960Z",
+  "claimRequestDate": "2022-02-18T14:05:05.960Z",
+  "endToEndId": "E12345678202202221158A2202221158"
+}

@@ -1,0 +1,492 @@
+{
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/api-users/src",
+  "monorepo": true,
+  "root": "apps/api-users",
+  "compilerOptions": {
+    "webpack": true,
+    "tsConfigPath": "apps/api-users/tsconfig.app.json",
+    "assets": [
+      "apps/api-users/src/assets/i18n/**/*"
+    ]
+  },
+  "projects": {
+    "api-users": {
+      "type": "application",
+      "root": "apps/api-users",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-users/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-users/tsconfig.app.json"
+      }
+    },
+    "api-caas": {
+      "type": "application",
+      "root": "apps/api-caas",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-caas/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-caas/tsconfig.app.json"
+      }
+    },
+    "api-admin": {
+      "type": "application",
+      "root": "apps/api-admin",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-admin/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-admin/tsconfig.app.json"
+      }
+    },
+    "api-grafana": {
+      "type": "application",
+      "root": "apps/api-grafana",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-grafana/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-grafana/tsconfig.app.json"
+      }
+    },
+    "api-topazio": {
+      "type": "application",
+      "root": "apps/api-topazio",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-topazio/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-topazio/tsconfig.app.json"
+      }
+    },
+    "api-jdpi": {
+      "type": "application",
+      "root": "apps/api-jdpi",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-jdpi/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-jdpi/tsconfig.app.json"
+      }
+    },
+    "api-jira": {
+      "type": "application",
+      "root": "apps/api-jira",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-jira/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-jira/tsconfig.app.json"
+      }
+    },
+    "api-paas": {
+      "type": "application",
+      "root": "apps/api-paas",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-paas/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-paas/tsconfig.app.json"
+      }
+    },
+    "api-asaas": {
+      "type": "application",
+      "root": "apps/api-asaas",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-asaas/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-asaas/tsconfig.app.json"
+      }
+    },
+    "api-genial": {
+      "type": "application",
+      "root": "apps/api-genial",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-genial/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-genial/tsconfig.app.json"
+      }
+    },
+    "api-pix-zro-pay": {
+      "type": "application",
+      "root": "apps/api-pix-zro-pay",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-pix-zro-pay/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-pix-zro-pay/tsconfig.app.json"
+      }
+    },
+    "infra-retry": {
+      "type": "application",
+      "root": "apps/infra-retry",
+      "entryFile": "main",
+      "sourceRoot": "apps/infra-retry/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/infra-retry/tsconfig.app.json"
+      }
+    },
+    "banking": {
+      "type": "application",
+      "root": "apps/banking",
+      "entryFile": "main",
+      "sourceRoot": "apps/banking/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/banking/tsconfig.app.json"
+      }
+    },
+    "compliance": {
+      "type": "application",
+      "root": "apps/compliance",
+      "entryFile": "main",
+      "sourceRoot": "apps/compliance/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/compliance/tsconfig.app.json"
+      }
+    },
+    "notifications": {
+      "type": "application",
+      "root": "apps/notifications",
+      "entryFile": "main",
+      "sourceRoot": "apps/notifications/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/notifications/tsconfig.app.json"
+      }
+    },
+    "operations": {
+      "type": "application",
+      "root": "apps/operations",
+      "entryFile": "main",
+      "sourceRoot": "apps/operations/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/operations/tsconfig.app.json"
+      }
+    },
+    "otc": {
+      "type": "application",
+      "root": "apps/otc",
+      "entryFile": "main",
+      "sourceRoot": "apps/otc/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/otc/tsconfig.app.json"
+      }
+    },
+    "otc-bot": {
+      "type": "application",
+      "root": "apps/otc-bot",
+      "entryFile": "main",
+      "sourceRoot": "apps/otc-bot/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/otc-bot/tsconfig.app.json"
+      }
+    },
+    "pix-keys": {
+      "type": "application",
+      "root": "apps/pix-keys",
+      "entryFile": "main",
+      "sourceRoot": "apps/pix-keys/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/pix-keys/tsconfig.app.json"
+      }
+    },
+    "pix-payments": {
+      "type": "application",
+      "root": "apps/pix-payments",
+      "entryFile": "main",
+      "sourceRoot": "apps/pix-payments/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/pix-payments/tsconfig.app.json"
+      }
+    },
+    "quotations": {
+      "type": "application",
+      "root": "apps/quotations",
+      "entryFile": "main",
+      "sourceRoot": "apps/quotations/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/quotations/tsconfig.app.json"
+      }
+    },
+    "reports": {
+      "type": "application",
+      "root": "apps/reports",
+      "entryFile": "main",
+      "sourceRoot": "apps/reports/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/reports/tsconfig.app.json"
+      }
+    },
+    "users": {
+      "type": "application",
+      "root": "apps/users",
+      "entryFile": "main",
+      "sourceRoot": "apps/users/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/users/tsconfig.app.json"
+      }
+    },
+    "webhooks": {
+      "type": "application",
+      "root": "apps/webhooks",
+      "entryFile": "main",
+      "sourceRoot": "apps/webhooks/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/webhooks/tsconfig.app.json"
+      }
+    },
+    "admin": {
+      "type": "application",
+      "root": "apps/admin",
+      "entryFile": "main",
+      "sourceRoot": "apps/admin/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/admin/tsconfig.app.json"
+      }
+    },
+    "storage": {
+      "type": "application",
+      "root": "apps/storage",
+      "entryFile": "main",
+      "sourceRoot": "apps/storage/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/storage/tsconfig.app.json"
+      }
+    },
+    "signup": {
+      "type": "application",
+      "root": "apps/signup",
+      "entryFile": "main",
+      "sourceRoot": "apps/signup/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/signup/tsconfig.app.json"
+      }
+    },
+    "utils": {
+      "type": "application",
+      "root": "apps/utils",
+      "entryFile": "main",
+      "sourceRoot": "apps/utils/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/utils/tsconfig.app.json"
+      }
+    },
+    "picpay": {
+      "type": "application",
+      "root": "apps/picpay",
+      "entryFile": "main",
+      "sourceRoot": "apps/picpay/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/picpay/tsconfig.app.json"
+      }
+    },
+    "cielo": {
+      "type": "application",
+      "root": "apps/cielo",
+      "entryFile": "main",
+      "sourceRoot": "apps/cielo/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/cielo/tsconfig.app.json"
+      }
+    },
+    "nupay": {
+      "type": "application",
+      "root": "apps/nupay",
+      "entryFile": "main",
+      "sourceRoot": "apps/nupay/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/nupay/tsconfig.app.json"
+      }
+    },
+    "common": {
+      "type": "library",
+      "root": "libs/common",
+      "entryFile": "index",
+      "sourceRoot": "libs/common/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/common/tsconfig.lib.json"
+      }
+    },
+    "dock": {
+      "type": "library",
+      "root": "libs/dock",
+      "entryFile": "index",
+      "sourceRoot": "libs/dock/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/dock/tsconfig.lib.json"
+      }
+    },
+    "matraca": {
+      "type": "library",
+      "root": "libs/matraca",
+      "entryFile": "index",
+      "sourceRoot": "libs/matraca/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/matraca/tsconfig.lib.json"
+      }
+    },
+    "zenvia": {
+      "type": "library",
+      "root": "libs/zenvia",
+      "entryFile": "index",
+      "sourceRoot": "libs/zenvia/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/zenvia/tsconfig.lib.json"
+      }
+    },
+    "b2c2": {
+      "type": "library",
+      "root": "libs/b2c2",
+      "entryFile": "index",
+      "sourceRoot": "libs/b2c2/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/b2c2/tsconfig.lib.json"
+      }
+    },
+    "binance": {
+      "type": "library",
+      "root": "libs/binance",
+      "entryFile": "index",
+      "sourceRoot": "libs/binance/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/binance/tsconfig.lib.json"
+      }
+    },
+    "mercado-bitcoin": {
+      "type": "library",
+      "root": "libs/mercado-bitcoin",
+      "entryFile": "index",
+      "sourceRoot": "libs/mercado-bitcoin/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/mercado-bitcoin/tsconfig.lib.json"
+      }
+    },
+    "bulksms": {
+      "type": "library",
+      "root": "libs/bulksms",
+      "entryFile": "index",
+      "sourceRoot": "libs/bulksms/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/bulksms/tsconfig.lib.json"
+      }
+    },
+    "topazio": {
+      "type": "library",
+      "root": "libs/topazio",
+      "entryFile": "index",
+      "sourceRoot": "libs/topazio/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/topazio/tsconfig.lib.json"
+      }
+    },
+    "file-storage": {
+      "type": "library",
+      "root": "libs/file-storage",
+      "entryFile": "index",
+      "sourceRoot": "libs/file-storage/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/file-storage/tsconfig.lib.json"
+      }
+    },
+    "s3-storage": {
+      "type": "library",
+      "root": "libs/s3-storage",
+      "entryFile": "index",
+      "sourceRoot": "libs/s3-storage/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/s3-storage/tsconfig.lib.json"
+      }
+    },
+    "fcm": {
+      "type": "library",
+      "root": "libs/fcm",
+      "entryFile": "index",
+      "sourceRoot": "libs/fcm/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/fcm/tsconfig.lib.json"
+      }
+    },
+    "e-guardian": {
+      "type": "library",
+      "root": "libs/e-guardian",
+      "entryFile": "index",
+      "sourceRoot": "libs/e-guardian/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/e-guardian/tsconfig.lib.json"
+      }
+    },
+    "payments-gateway": {
+      "type": "application",
+      "root": "apps/payments-gateway",
+      "entryFile": "main",
+      "sourceRoot": "apps/payments-gateway/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/payments-gateway/tsconfig.app.json"
+      }
+    },
+    "pix-zro-pay": {
+      "type": "application",
+      "root": "apps/pix-zro-pay",
+      "entryFile": "main",
+      "sourceRoot": "apps/pix-zro-pay/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/pix-zro-pay/tsconfig.app.json"
+      }
+    },
+    "jdpi": {
+      "type": "library",
+      "root": "libs/jdpi",
+      "entryFile": "index",
+      "sourceRoot": "libs/jdpi/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/jdpi/tsconfig.lib.json"
+      }
+    },
+    "asaas": {
+      "type": "library",
+      "root": "libs/asaas",
+      "entryFile": "index",
+      "sourceRoot": "libs/asaas/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/asaas/tsconfig.lib.json"
+      }
+    },
+    "genial": {
+      "type": "library",
+      "root": "libs/genial",
+      "entryFile": "index",
+      "sourceRoot": "libs/genial/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/genial/tsconfig.lib.json"
+      }
+    },
+    "zrobank": {
+      "type": "library",
+      "root": "libs/zrobank",
+      "entryFile": "index",
+      "sourceRoot": "libs/zrobank/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/zrobank/tsconfig.lib.json"
+      }
+    },
+    "create-kafka-topics": {
+      "type": "application",
+      "root": "scripts/create-kafka-topics",
+      "entryFile": "main",
+      "sourceRoot": "scripts/create-kafka-topics/src",
+      "compilerOptions": {
+        "tsConfigPath": "scripts/create-kafka-topics/tsconfig.app.json"
+      }
+    },
+    "update-user-limit-tracker": {
+      "type": "application",
+      "root": "scripts/update-user-limit-tracker",
+      "entryFile": "main",
+      "sourceRoot": "scripts/update-user-limit-tracker/src",
+      "compilerOptions": {
+        "tsConfigPath": "scripts/update-user-limit-tracker/tsconfig.app.json"
+      }
+    },
+    "api-open-banking": {
+      "type": "application",
+      "root": "apps/api-open-banking",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-open-banking/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-open-banking/tsconfig.app.json"
+      }
+    }
+  }
+}

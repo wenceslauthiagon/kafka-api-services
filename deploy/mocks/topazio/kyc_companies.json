@@ -1,0 +1,81 @@
+{
+  "TaxIdNumber": "15696336000108",
+  "TaxIdCountry": "Brazil",
+  "OfficialName": "ZRO FAKER LTDA.",
+  "TradeName": "ZRO FAKER BEAUTIFY LTDA.",
+  "NameUniquenessScore": 0.125,
+  "OfficialNameUniquenessScore": 0.125,
+  "TradeNameUniquenessScore": -1,
+  "FoundedDate": "2021-09-01T00:00:00Z",
+  "Age": 17,
+  "IsHeadquarter": true,
+  "HeadquarterState": "PE",
+  "IsConglomerate": true,
+  "TaxIdStatus": "ATIVA",
+  "TaxIdOrigin": "Receita Federal",
+  "TaxIdStatusDate": "2022-02-28T00:00:00Z",
+  "TaxIdStatusRegistrationDate": "2021-09-01T00:00:00Z",
+  "TaxRegime": "LTDA",
+  "CompanyType_ReceitaFederal": "DEMAIS",
+  "TaxRegimes": {
+    "Simples": false
+  },
+  "Activities": [
+    {
+      "IsMain": true,
+      "Code": "6319400",
+      "Activity": "PORTAIS, PROVEDORES DE CONTEUDO E OUTROS SERVICOS DE INFORMACAO NA INTERNET"
+    },
+    {
+      "IsMain": false,
+      "Code": "6202300",
+      "Activity": "DESENVOLVIMENTO E LICENCIAMENTO DE PROGRAMAS DE COMPUTADOR CUSTOMIZAVEIS"
+    },
+    {
+      "IsMain": false,
+      "Code": "6201501",
+      "Activity": "DESENVOLVIMENTO DE PROGRAMAS DE COMPUTADOR SOB ENCOMENDA"
+    }
+  ],
+  "LegalNature": {
+    "Code": "2062",
+    "Activity": "SOCIEDADE EMPRESARIA LIMITADA"
+  },
+  "SpecialSituation": "",
+  "CreationDate": "2021-05-27T00:00:00Z",
+  "LastUpdateDate": "2022-02-16T00:00:00Z",
+  "AdditionalOutputData": {
+    "Capital": "DUZENTOS TRILHÕES DE REAIS",
+    "CapitalRS": "200000000000000.00",
+    "NIRE": "",
+    "NIRECompanySize": "",
+    "NIREHeadquartersType": "",
+    "NIREHeadquartersCapital": "0",
+    "NIRELastCaptureDate": "1/1/0001 12:00:00 AM",
+    "COMEX": null,
+    "COMEXLastUpdate": "1/1/0001 12:00:00 AM"
+  },
+  "HistoricalData": {
+    "HasChangedTradeName": false,
+    "HasChangedTaxRegime": true,
+    "HistoricalDataEvolution": {
+      "TradeName": [
+        {
+          "Value": "",
+          "StartDate": "2021-05-27T00:00:00Z"
+        }
+      ],
+      "TaxRegime": [
+        {
+          "Value": "LTDA",
+          "StartDate": "2021-09-01T00:00:00"
+        },
+        {
+          "Value": "LUCRO REAL",
+          "StartDate": "2021-05-01T00:00:00",
+          "EndDate": "2021-09-01T00:00:00"
+        }        
+      ]
+    }
+  }
+}
